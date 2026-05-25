@@ -235,6 +235,33 @@ sealed class BridgeEvent {
     /** User tapped the symbol name; fires when `onSymbolClick` is enabled in the init command. */
     data class SymbolClick(val symbol: String) : BridgeEvent()
 
+    /**
+     * User picked a layout preset or toggled a cross-pane sync option in the
+     * chart-owned LayoutPopover. Fires only when `enableMultipleLayouts` is set
+     * in [BridgeCommand.Init]. The native host should mount / teardown panes to
+     * match [presetId] (one of `"1"`, `"2-h"`, `"4-2x2"`, etc. — see the JS
+     * library's `LAYOUT_PRESETS` for the full list) and apply the sync flags.
+     *
+     * @param syncJson Raw JSON of the `LayoutSyncState` object: `{"symbol":bool,"interval":bool,"crosshair":bool,"time":bool,"dateRange":bool}`.
+     */
+    data class LayoutChange(
+        val presetId: String,
+        val syncJson: String,
+    ) : BridgeEvent()
+
+    /**
+     * User picked Download or Copy from the chart-owned SnapshotPopover. Fires
+     * only when `enableSnapshot` is set in [BridgeCommand.Init]. The chart will
+     * still attempt the native browser action; native hosts can save the PNG
+     * via platform APIs (MediaStore, ClipboardManager) using [dataUrl].
+     *
+     * @param action `"download"` or `"copy"`.
+     */
+    data class Snapshot(
+        val dataUrl: String,
+        val action: String,
+    ) : BridgeEvent()
+
     /** An error occurred inside the chart engine. */
     data class Error(val message: String, val code: String? = null) : BridgeEvent()
 }
@@ -428,6 +455,16 @@ object BridgeEventParser {
             "uiStateChange" -> BridgeEvent.UiStateChange(p.optBoolean("hasOpenUI", false))
 
             "symbolClick" -> BridgeEvent.SymbolClick(p.optString("symbol", ""))
+
+            "layoutChange" -> BridgeEvent.LayoutChange(
+                presetId = p.getString("presetId"),
+                syncJson = p.optJSONObject("sync")?.toString() ?: "{}",
+            )
+
+            "snapshot" -> BridgeEvent.Snapshot(
+                dataUrl = p.getString("dataUrl"),
+                action  = p.optString("action", "download"),
+            )
 
             "error" -> BridgeEvent.Error(
                 message = p.optString("message", "Unknown error"),

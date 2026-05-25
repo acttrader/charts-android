@@ -72,7 +72,7 @@ afterEvaluate {
                 pom {
                     name.set("ActtraderCharts Android")
                     description.set("Android WebView wrapper for acttrader-charts")
-                    url.set("https://github.com/${System.getenv("GITHUB_REPOSITORY") ?: "acttrader/acttrader-charts-android"}")
+                    url.set("https://github.com/${System.getenv("GITHUB_REPOSITORY") ?: "acttrader/charts-android"}")
                     licenses {
                         license {
                             name.set("MIT License")
@@ -89,7 +89,7 @@ afterEvaluate {
             if (!ghToken.isNullOrBlank()) {
                 maven {
                     name = "GitHubPackages"
-                    url = uri("https://maven.pkg.github.com/${System.getenv("GITHUB_REPOSITORY") ?: "acttrader/acttrader-charts-android"}")
+                    url = uri("https://maven.pkg.github.com/${System.getenv("GITHUB_REPOSITORY") ?: "acttrader/charts-android"}")
                     credentials {
                         username = ghActor ?: ""
                         password = ghToken

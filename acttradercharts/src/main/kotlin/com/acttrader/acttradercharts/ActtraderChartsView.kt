@@ -235,6 +235,20 @@ class ActtraderChartsView @JvmOverloads constructor(
      */
     var onSymbolClick: ((BridgeEvent.SymbolClick) -> Unit)? = null
 
+    /**
+     * Called when the user picks a layout preset or toggles a cross-pane sync
+     * option in the chart-owned multi-layout popover. Fires only when
+     * `enableMultipleLayouts = true` was passed to [init].
+     */
+    var onLayoutChange: ((BridgeEvent.LayoutChange) -> Unit)? = null
+
+    /**
+     * Called when the user picks Download or Copy from the chart-owned snapshot
+     * popover. Fires only when `enableSnapshot = true` was passed to [init].
+     * Use the supplied `dataUrl` (base64 PNG) to save via platform APIs.
+     */
+    var onSnapshot: ((BridgeEvent.Snapshot) -> Unit)? = null
+
     /** Called when the chart engine reports an error. */
     var onError: ((BridgeEvent.Error) -> Unit)? = null
 
@@ -293,6 +307,8 @@ class ActtraderChartsView @JvmOverloads constructor(
             }
             is BridgeEvent.DataRequest         -> onDataRequest?.invoke(event)
             is BridgeEvent.SymbolClick         -> onSymbolClick?.invoke(event)
+            is BridgeEvent.LayoutChange        -> onLayoutChange?.invoke(event)
+            is BridgeEvent.Snapshot            -> onSnapshot?.invoke(event)
             is BridgeEvent.Error               -> onError?.invoke(event)
         }
     }
@@ -406,6 +422,34 @@ class ActtraderChartsView @JvmOverloads constructor(
         /** IANA timezone string for time-axis and crosshair labels. Default: `"UTC"`. */
         timezone: String? = null,
         /**
+         * Top-bar variant. `"simple"` (default) is the classic TopBar; `"advanced"`
+         * is the pill-style AdvancedToolbar; `"compact"` is the slim per-pane
+         * CompactToolbar (intended for cells of a host-rendered multi-pane grid).
+         */
+        headerLayout: String? = null,
+        /**
+         * Enables the chart-owned multi-layout popover (Layout button → 26 preset
+         * picker + cross-pane sync toggles). Fires [BridgeEvent.LayoutChange] on
+         * selection. The host is still responsible for mounting / tearing down
+         * additional panes — the chart only emits intent.
+         */
+        enableMultipleLayouts: Boolean? = null,
+        /**
+         * Enables the chart-owned snapshot popover (Snapshot button → Download / Copy).
+         * Fires [BridgeEvent.Snapshot] with a base64 PNG so the native layer can
+         * intercept and save via platform APIs (MediaStore, ClipboardManager).
+         */
+        enableSnapshot: Boolean? = null,
+        /**
+         * Hides the chart header entirely (whichever variant [headerLayout] would
+         * have rendered). Bottom bar, drawing tools, and on-canvas overlays remain
+         * on their own flags. Use when the host app provides its own controls and
+         * drives the chart via [BridgeCommand.SetTimeframe], [BridgeCommand.SetSeries],
+         * [BridgeCommand.AddIndicatorByName], [BridgeCommand.RemoveIndicator].
+         * Default: `false` (header visible).
+         */
+        hideHeader: Boolean? = null,
+        /**
          * Raw JSON string from a prior [onStateSnapshot] callback. When provided, the full chart state
          * (timeframe, series, indicators, drawings, etc.) is restored atomically alongside the init
          * command — both are evaluated in a single `evaluateJavascript` call, so there is no
@@ -444,6 +488,10 @@ class ActtraderChartsView @JvmOverloads constructor(
         uiConfigJson = uiConfigJson, durationTimeframeMap = durationTimeframeMap,
         onSymbolClick = onSymbolClick,
         timezone = timezone,
+        headerLayout = headerLayout,
+        enableMultipleLayouts = enableMultipleLayouts,
+        enableSnapshot = enableSnapshot,
+        hideHeader = hideHeader,
         )
         if (stateJson == null) {
             sendCommand(initCmd)

@@ -1,6 +1,6 @@
-# acttrader-charts-android
+# charts-android
 
-Android Kotlin library that renders [`acttrader-charts`](https://github.com/piyushrawat1991/acttrader-charts) inside a `WebView`.
+Android Kotlin library that renders [`ActCharts`](https://github.com/acttrader/ActCharts) inside a `WebView`.
 
 ## Requirements
 
@@ -15,7 +15,7 @@ Add GitHub Packages to your project's `settings.gradle.kts`:
 dependencyResolutionManagement {
     repositories {
         maven {
-            url = uri("https://maven.pkg.github.com/piyushrawat1991/acttrader-charts-android")
+            url = uri("https://maven.pkg.github.com/acttrader/charts-android")
         }
     }
 }
@@ -206,6 +206,7 @@ chart.loadData(bars)
 | `hideSymbolAndTick` | `Boolean?` | `null` | Hide the symbol name and tick-activity (streaming) dot in the top-left overlay. Does **not** affect the OHLC(V) strip — use `hideOHLCV` for that |
 | `hideOHLCV` | `Boolean?` | `null` | Hide the OHLC(V) data strip (`O: H: L: C: V:`) in the top-left overlay. Independent of `hideSymbolAndTick` — set both to `true` to hide the entire overlay |
 | `showBottomBar` | `Boolean?` | `null` | Show the bottom duration-selector bar (hidden by default) |
+| `hideHeader` | `Boolean?` | `null` (`false`) | Hide the chart header entirely (whichever `headerLayout` variant would have rendered). Bottom bar, drawing tools, and on-canvas overlays remain on their own flags. Drive the chart from native UI via `setTimeframe(...)`, `setSeries(...)`, `addIndicatorByName(...)`, `removeIndicator(...)` |
 | `timezone` | `String?` | `null` (`"UTC"`) | IANA timezone string for time-axis and crosshair labels. `"UTC"` (default), `"local"` (device timezone), or any IANA string (`"America/New_York"`, `"Europe/London"`, etc.) |
 | `uiConfigJson` | `String?` | `null` | Per-component UI configuration overrides (font sizes, icon sizes, spacing) as a raw JSON string. See *Mobile icon sizing* below. |
 | `themeOverrides` | `ThemeOverrides?` | `null` | Typed per-theme color overrides. See *Theme overrides* below. |
@@ -329,6 +330,53 @@ chart.init(
 | `onBridgeEvent` | `BridgeEvent` | Generic — fires for every event including those with typed callbacks |
 
 > **`isFullscreen`** is `true` when the chart is in fullscreen mode at the time of the TFC action. Use it to gate toast notifications so they only appear while the chart is covering the full screen.
+
+## Multi-pane layouts & snapshot
+
+The WebView bundle includes the chart-owned multi-layout popover (26 grid
+presets + 5 cross-pane sync toggles) and a snapshot popover (Download / Copy
+PNG). Both are opt-in and dispatch bridge events back to the host.
+
+### Enabling the layout & snapshot UI
+
+```kotlin
+chart.init(
+    theme                 = "dark",
+    symbol                = "EURUSD",
+    timeframe             = "1h",
+    headerLayout          = "advanced",   // "simple" (default) | "advanced" | "compact"
+    enableMultipleLayouts = true,         // Layout button + preset picker
+    enableSnapshot        = true,         // Snapshot button + Download/Copy
+)
+
+chart.onLayoutChange = { evt ->
+    // evt.presetId is one of "1", "2-h", "2-v", "4-2x2", "6-2x3", "8-4x2", … —
+    // see the JS library's LAYOUT_PRESETS for the full catalogue.
+    // evt.syncJson is the raw LayoutSyncState JSON: {symbol, interval, crosshair, time, dateRange}.
+    Log.d("Chart", "preset=${evt.presetId} sync=${evt.syncJson}")
+    // The host owns the actual N-pane grid — mount/teardown sibling ActtraderChartsView
+    // instances to match preset.count and apply the sync flags.
+}
+
+chart.onSnapshot = { evt ->
+    // evt.action is "download" or "copy"; evt.dataUrl is a base64 PNG.
+    // Intercept here to save to MediaStore / clipboard via platform APIs.
+}
+```
+
+### `headerLayout`
+
+| Value        | Use case
+|--------------|----------------------------------------------------------------
+| `"simple"`   | Classic TopBar (default) — symbol, type, timeframe, studies, drawings
+| `"advanced"` | Compact pill-style toolbar — recommended above multi-pane grids
+| `"compact"`  | Slim per-pane toolbar — recommended for individual cells of a grid
+
+> **Sync flags are intent, not action.** The native host is responsible for
+> mirroring symbol/timeframe/viewport across the sibling chart views — the
+> JS-side `ChartGroup` only operates inside one WebView. On mobile each pane
+> is its own `ActtraderChartsView`, so coordinate from native code (e.g. set
+> the same timeframe on all panes when `syncJson["interval"]` is `true`).
 
 ## Handling the hardware back button
 

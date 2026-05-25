@@ -30,7 +30,7 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
           mkdir -p acttradercharts/src/main/assets
           gh release download "v${VERSION}" \
-            --repo piyushrawat1991/acttrader-charts \
+            --repo acttrader/ActCharts \
             --pattern "chart.html" \
             --output acttradercharts/src/main/assets/chart.html \
             --clobber

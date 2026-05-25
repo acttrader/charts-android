@@ -124,6 +124,33 @@ sealed class BridgeCommand {
         val onSymbolClick: Boolean = false,
         /** IANA timezone string for time-axis and crosshair labels. Default: `"UTC"`. */
         val timezone: String? = null,
+        /**
+         * Top-bar variant. `"simple"` (default) shows the classic TopBar; `"advanced"`
+         * uses the compact pill-style AdvancedToolbar; `"compact"` uses the slim
+         * per-pane CompactToolbar — recommended only when this chart is one cell
+         * of a host-rendered multi-pane grid.
+         */
+        val headerLayout: String? = null,
+        /**
+         * Enables the chart-owned multi-layout popover (Layout button + 26 preset
+         * picker + sync toggles). Fires `layoutChange` events; host is responsible
+         * for actually mounting N panes.
+         */
+        val enableMultipleLayouts: Boolean? = null,
+        /**
+         * Enables the chart-owned snapshot popover (Snapshot button + Download/Copy).
+         * Fires `snapshot` events with the PNG data URL; native layers can intercept
+         * to save via platform APIs.
+         */
+        val enableSnapshot: Boolean? = null,
+        /**
+         * Hides the chart header entirely (whichever variant [headerLayout] would
+         * have rendered). Bottom bar, drawing tools, and on-canvas overlays stay on
+         * their own flags. Drive the chart from native UI via [BridgeCommand.SetTimeframe],
+         * [BridgeCommand.SetSeries], [BridgeCommand.AddIndicatorByName],
+         * [BridgeCommand.RemoveIndicator]. Default: `false` (header visible).
+         */
+        val hideHeader: Boolean? = null,
     ) : BridgeCommand() {
         override fun toJson(): String = JSONObject().apply {
             put("type", "init")
@@ -178,6 +205,10 @@ sealed class BridgeCommand {
                 uiConfigJson?.let { putJson("uiConfig", it) }
                 if (onSymbolClick) put("onSymbolClick", true)
                 timezone?.let { put("timezone", it) }
+                headerLayout?.let { put("headerLayout", it) }
+                enableMultipleLayouts?.let { put("enableMultipleLayouts", it) }
+                enableSnapshot?.let { put("enableSnapshot", it) }
+                hideHeader?.let { put("hideHeader", it) }
             })
         }.toString()
     }
