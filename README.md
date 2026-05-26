@@ -142,6 +142,11 @@ parentLayout.addView(chart)
 | `setTimezone(timezone)` | Change display timezone at runtime — IANA string (`"America/New_York"`) or `"local"` |
 | `setThemeOverrides(overrides)` | Update per-theme color overrides at runtime — accepts typed `ThemeOverrides` or raw JSON string |
 | `correctBar(barTime, bar)` | Replace a specific bar with authoritative OHLCV data (e.g. server correction) |
+| **Compare** | |
+| `addCompare(symbol)` | Add a compare symbol overlay. Fires `onCompareDataRequest` — reply via `resolveCompareDataRequest` |
+| `removeCompare(symbol)` | Remove a compare symbol. No-op if not active |
+| `clearCompares()` | Remove every active compare symbol |
+| `resolveCompareDataRequest(requestId, bars)` | Resolve a pending `onCompareDataRequest` with fetched bars |
 
 #### Symbol switch pattern
 
@@ -210,6 +215,8 @@ chart.loadData(bars)
 | `timezone` | `String?` | `null` (`"UTC"`) | IANA timezone string for time-axis and crosshair labels. `"UTC"` (default), `"local"` (device timezone), or any IANA string (`"America/New_York"`, `"Europe/London"`, etc.) |
 | `uiConfigJson` | `String?` | `null` | Per-component UI configuration overrides (font sizes, icon sizes, spacing) as a raw JSON string. See *Mobile icon sizing* below. |
 | `themeOverrides` | `ThemeOverrides?` | `null` | Typed per-theme color overrides. See *Theme overrides* below. |
+| `initialCompares` | `List<String>?` | `null` | Compare symbols to add automatically on init. Each one fires `onCompareDataRequest` against the initial primary range — respond via `resolveCompareDataRequest` |
+| `maxCompares` | `Int?` | `null` (`8`) | Maximum concurrent compare symbols. Adding beyond fires `onCompareError` |
 | `stateJson` | `String?` | `null` | Raw JSON from a prior `onStateSnapshot` to restore atomically at init (timeframe, series, indicators, drawings). See *Restoring state without a flash* below. |
 
 ### Restoring state without a flash
@@ -326,6 +333,10 @@ chart.init(
 | `onDataRequest` | `BridgeEvent.DataRequest` | Chart requests data for a time range — `.requestId`, `.from`, `.to`, `.timeframe`; call `resolveDataRequest` to respond |
 | `onSymbolClick` | `BridgeEvent.SymbolClick` | User tapped the symbol name (requires `onSymbolClick = true` in `init`) |
 | `onStateSnapshot` | `BridgeEvent.StateSnapshot` | Response to `getState()` — `.stateJson` |
+| `onCompareDataRequest` | `BridgeEvent.CompareDataRequest` | Chart needs bars for a compare symbol — `.requestId`, `.symbol`, `.timeframe`, `.interval`, `.start`, `.end`; reply via `resolveCompareDataRequest` |
+| `onCompareAdded` | `BridgeEvent.CompareAdded` | Compare symbol added — `.symbol`, `.color` |
+| `onCompareRemoved` | `BridgeEvent.CompareRemoved` | Compare symbol removed — `.symbol` |
+| `onCompareError` | `BridgeEvent.CompareError` | Compare fetch / add failed — `.symbol`, `.message` |
 | `onError` | `BridgeEvent.Error` | Engine error — `.message`, `.code` |
 | `onBridgeEvent` | `BridgeEvent` | Generic — fires for every event including those with typed callbacks |
 
@@ -377,6 +388,43 @@ chart.onSnapshot = { evt ->
 > JS-side `ChartGroup` only operates inside one WebView. On mobile each pane
 > is its own `ActtraderChartsView`, so coordinate from native code (e.g. set
 > the same timeframe on all panes when `syncJson["interval"]` is `true`).
+
+## Compare symbols
+
+Overlay one or more comparison instruments on the main chart, normalized to
+percent change from the leftmost visible bar. Historical-only — no live
+streaming. The chart owns the picker UI (filtered by the symbols you supplied
+to `init` via `isins`) and refetches every active compare automatically when
+the primary timeframe / symbol changes or the user pans back into history.
+
+```kotlin
+chart.init(
+    symbol           = "AAPL",
+    headerLayout     = "advanced",   // Compare button lives in this toolbar
+    initialCompares  = listOf("SPY"),
+    maxCompares      = 8,
+)
+
+// Serve the chart's compare data requests.
+chart.onCompareDataRequest = { req ->
+    lifecycleScope.launch {
+        val bars = api.fetchBars(req.symbol, req.interval, req.start, req.end)
+        chart.resolveCompareDataRequest(req.requestId, bars)
+    }
+}
+
+chart.onCompareAdded   = { evt -> Log.d("chart", "+ ${evt.symbol} ${evt.color}") }
+chart.onCompareRemoved = { evt -> Log.d("chart", "- ${evt.symbol}") }
+chart.onCompareError   = { evt -> Log.w("chart", "${evt.symbol}: ${evt.message}") }
+
+// Programmatic control.
+chart.addCompare("MSFT")
+chart.removeCompare("MSFT")
+chart.clearCompares()
+```
+
+When at least one compare is active the Y-axis switches to percent
+(`+12.34%` / `-5.67%`); removing every compare returns it to absolute prices.
 
 ## Handling the hardware back button
 

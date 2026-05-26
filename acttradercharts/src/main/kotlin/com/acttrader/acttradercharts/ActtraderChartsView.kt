@@ -249,6 +249,23 @@ class ActtraderChartsView @JvmOverloads constructor(
      */
     var onSnapshot: ((BridgeEvent.Snapshot) -> Unit)? = null
 
+    /**
+     * Called when the chart engine needs bars for a compare symbol. Fetch
+     * bars for the supplied symbol over the [BridgeEvent.CompareDataRequest.start]
+     * / `.end` window at the requested [BridgeEvent.CompareDataRequest.interval],
+     * then call [resolveCompareDataRequest] with the same `requestId`.
+     */
+    var onCompareDataRequest: ((BridgeEvent.CompareDataRequest) -> Unit)? = null
+
+    /** Called when a compare symbol has been added and its bars resolved. */
+    var onCompareAdded: ((BridgeEvent.CompareAdded) -> Unit)? = null
+
+    /** Called when a compare symbol is removed (×, [removeCompare], or [clearCompares]). */
+    var onCompareRemoved: ((BridgeEvent.CompareRemoved) -> Unit)? = null
+
+    /** Called when adding a compare or fetching its bars fails. */
+    var onCompareError: ((BridgeEvent.CompareError) -> Unit)? = null
+
     /** Called when the chart engine reports an error. */
     var onError: ((BridgeEvent.Error) -> Unit)? = null
 
@@ -309,6 +326,10 @@ class ActtraderChartsView @JvmOverloads constructor(
             is BridgeEvent.SymbolClick         -> onSymbolClick?.invoke(event)
             is BridgeEvent.LayoutChange        -> onLayoutChange?.invoke(event)
             is BridgeEvent.Snapshot            -> onSnapshot?.invoke(event)
+            is BridgeEvent.CompareDataRequest  -> onCompareDataRequest?.invoke(event)
+            is BridgeEvent.CompareAdded        -> onCompareAdded?.invoke(event)
+            is BridgeEvent.CompareRemoved      -> onCompareRemoved?.invoke(event)
+            is BridgeEvent.CompareError        -> onCompareError?.invoke(event)
             is BridgeEvent.Error               -> onError?.invoke(event)
         }
     }
@@ -450,6 +471,14 @@ class ActtraderChartsView @JvmOverloads constructor(
          */
         hideHeader: Boolean? = null,
         /**
+         * Compare symbols to add automatically on chart init. Each entry triggers
+         * a [BridgeEvent.CompareDataRequest] against the initial primary range —
+         * respond via [resolveCompareDataRequest].
+         */
+        initialCompares: List<String>? = null,
+        /** Maximum concurrent compare symbols. Adding beyond emits [BridgeEvent.CompareError]. Default: `8`. */
+        maxCompares: Int? = null,
+        /**
          * Raw JSON string from a prior [onStateSnapshot] callback. When provided, the full chart state
          * (timeframe, series, indicators, drawings, etc.) is restored atomically alongside the init
          * command — both are evaluated in a single `evaluateJavascript` call, so there is no
@@ -492,6 +521,8 @@ class ActtraderChartsView @JvmOverloads constructor(
         enableMultipleLayouts = enableMultipleLayouts,
         enableSnapshot = enableSnapshot,
         hideHeader = hideHeader,
+        initialCompares = initialCompares,
+        maxCompares = maxCompares,
         )
         if (stateJson == null) {
             sendCommand(initCmd)
@@ -580,6 +611,28 @@ class ActtraderChartsView @JvmOverloads constructor(
      */
     fun resolveDataRequest(requestId: String, bars: List<OHLCVBar>) =
         sendCommand(BridgeCommand.ResolveDataRequest(requestId, bars))
+
+    // ── Compare ───────────────────────────────────────────────────────────────
+
+    /**
+     * Adds a compare symbol overlay. The chart fires [BridgeEvent.CompareDataRequest]
+     * with the primary chart's current timeframe / range; respond by calling
+     * [resolveCompareDataRequest] with the fetched bars.
+     */
+    fun addCompare(symbol: String) = sendCommand(BridgeCommand.AddCompare(symbol))
+
+    /** Removes a compare symbol. No-op when not active. */
+    fun removeCompare(symbol: String) = sendCommand(BridgeCommand.RemoveCompare(symbol))
+
+    /** Removes every active compare symbol. */
+    fun clearCompares() = sendCommand(BridgeCommand.ClearCompares)
+
+    /**
+     * Resolves a pending [BridgeEvent.CompareDataRequest] with fetched bars.
+     * Call this from [onCompareDataRequest] once the historical bars are ready.
+     */
+    fun resolveCompareDataRequest(requestId: String, bars: List<OHLCVBar>) =
+        sendCommand(BridgeCommand.ResolveCompareDataRequest(requestId, bars))
 
     /**
      * Enables or disables verbose tick/render logging in the browser console.

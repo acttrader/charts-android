@@ -151,6 +151,14 @@ sealed class BridgeCommand {
          * [BridgeCommand.RemoveIndicator]. Default: `false` (header visible).
          */
         val hideHeader: Boolean? = null,
+        /**
+         * Compare symbols to add automatically on chart init. Each entry triggers
+         * a [BridgeEvent.CompareDataRequest] against the initial primary range —
+         * respond via [BridgeCommand.ResolveCompareDataRequest].
+         */
+        val initialCompares: List<String>? = null,
+        /** Maximum concurrent compare symbols. Adding beyond emits [BridgeEvent.CompareError]. Default: `8`. */
+        val maxCompares: Int? = null,
     ) : BridgeCommand() {
         override fun toJson(): String = JSONObject().apply {
             put("type", "init")
@@ -209,6 +217,8 @@ sealed class BridgeCommand {
                 enableMultipleLayouts?.let { put("enableMultipleLayouts", it) }
                 enableSnapshot?.let { put("enableSnapshot", it) }
                 hideHeader?.let { put("hideHeader", it) }
+                initialCompares?.let { put("initialCompares", JSONArray(it)) }
+                maxCompares?.let { put("maxCompares", it) }
             })
         }.toString()
     }
@@ -767,6 +777,64 @@ sealed class BridgeCommand {
                     put("close", bar.close)
                     put("volume", bar.volume)
                     put("time", bar.time)
+                })
+            })
+        }.toString()
+    }
+
+    // ── Compare ───────────────────────────────────────────────────────────────
+
+    /**
+     * Adds a compare symbol overlay. The chart will fire a
+     * [BridgeEvent.CompareDataRequest]; reply via [ResolveCompareDataRequest].
+     */
+    data class AddCompare(val symbol: String) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "addCompare")
+            put("payload", JSONObject().apply { put("symbol", symbol) })
+        }.toString()
+    }
+
+    /** Removes a compare symbol. No-op when not active. */
+    data class RemoveCompare(val symbol: String) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "removeCompare")
+            put("payload", JSONObject().apply { put("symbol", symbol) })
+        }.toString()
+    }
+
+    /** Removes every active compare symbol. */
+    object ClearCompares : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "clearCompares")
+            put("payload", JSONObject())
+        }.toString()
+    }
+
+    /**
+     * Resolves a pending [BridgeEvent.CompareDataRequest] with fetched bars.
+     * @param requestId The ID from the request event.
+     * @param bars Historical OHLCV bars covering the requested range.
+     */
+    data class ResolveCompareDataRequest(
+        val requestId: String,
+        val bars: List<OHLCVBar>,
+    ) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "resolveCompareDataRequest")
+            put("payload", JSONObject().apply {
+                put("requestId", requestId)
+                put("bars", JSONArray().also { arr ->
+                    bars.forEach { bar ->
+                        arr.put(JSONObject().apply {
+                            put("open", bar.open)
+                            put("high", bar.high)
+                            put("low", bar.low)
+                            put("close", bar.close)
+                            put("volume", bar.volume)
+                            put("time", bar.time)
+                        })
+                    }
                 })
             })
         }.toString()

@@ -262,6 +262,35 @@ sealed class BridgeEvent {
         val action: String,
     ) : BridgeEvent()
 
+    /**
+     * Chart engine is requesting bars for a compare symbol. Respond by calling
+     * [ActtraderChartsView.resolveCompareDataRequest] with the fetched bars.
+     *
+     * @param requestId Correlation ID — must be passed back to the resolver.
+     * @param symbol    The compare symbol being added or refetched.
+     * @param timeframe Current primary timeframe (e.g. `"1D"`).
+     * @param interval  Base interval string passed to the loader (e.g. `"1day"`).
+     * @param start     Range start in milliseconds since epoch.
+     * @param end       Range end in milliseconds since epoch.
+     */
+    data class CompareDataRequest(
+        val requestId: String,
+        val symbol: String,
+        val timeframe: String,
+        val interval: String,
+        val start: Long,
+        val end: Long,
+    ) : BridgeEvent()
+
+    /** A compare symbol was added and assigned an auto-picked palette color. */
+    data class CompareAdded(val symbol: String, val color: String) : BridgeEvent()
+
+    /** A compare symbol was removed (×, programmatic remove, or clearCompares). */
+    data class CompareRemoved(val symbol: String) : BridgeEvent()
+
+    /** Adding a compare or fetching its bars failed. */
+    data class CompareError(val symbol: String, val message: String) : BridgeEvent()
+
     /** An error occurred inside the chart engine. */
     data class Error(val message: String, val code: String? = null) : BridgeEvent()
 }
@@ -464,6 +493,27 @@ object BridgeEventParser {
             "snapshot" -> BridgeEvent.Snapshot(
                 dataUrl = p.getString("dataUrl"),
                 action  = p.optString("action", "download"),
+            )
+
+            "compareDataRequest" -> BridgeEvent.CompareDataRequest(
+                requestId = p.getString("requestId"),
+                symbol    = p.getString("symbol"),
+                timeframe = p.getString("timeframe"),
+                interval  = p.getString("interval"),
+                start     = p.getLong("start"),
+                end       = p.getLong("end"),
+            )
+
+            "compareAdded" -> BridgeEvent.CompareAdded(
+                symbol = p.getString("symbol"),
+                color  = p.getString("color"),
+            )
+
+            "compareRemoved" -> BridgeEvent.CompareRemoved(p.getString("symbol"))
+
+            "compareError" -> BridgeEvent.CompareError(
+                symbol  = p.getString("symbol"),
+                message = p.optString("message", ""),
             )
 
             "error" -> BridgeEvent.Error(
