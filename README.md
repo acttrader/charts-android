@@ -99,8 +99,8 @@ parentLayout.addView(chart)
 | `setTimeframe(timeframe)` | `"1m"` `"5m"` `"15m"` `"30m"` `"1h"` `"4h"` `"1D"` `"1W"` `"1M"` `"1Y"` |
 | `setSeries(type)` | Change chart type (`"candlestick"`, `"hollow_candle"`, `"line"`, `"area"`, `"ohlc"`) |
 | `setSymbol(symbol)` | Update displayed symbol name |
-| `addIndicator(name, params?)` | Add study (e.g. `"SMA"`, `"EMA"`, `"RSI"`, `"BB"`, `"MACD"`) |
-| `removeIndicator(name)` | Remove study by name |
+| `addIndicator(name, params?)` | Add study (e.g. `"SMA"`, `"EMA"`, `"RSI"`, `"BB"`, `"MACD"`). Parameterized studies add a **new instance** per call (multiple EMAs etc.); listen to `onIndicatorAdded` for its `instanceId` |
+| `removeIndicator(name)` | Remove a study — pass an `instanceId` (e.g. `"EMA#3"`) for one instance, or a short name (e.g. `"EMA"`) for all instances of that study |
 | `setDrawingTool(tool?)` | Activate drawing tool (e.g. `"trend_line"`, `"horizontal_line"`), `null` to deactivate |
 | `clearAllDrawings()` | Remove all drawings |
 | `getState()` | Request state snapshot — result delivered via `onStateSnapshot` |
@@ -337,6 +337,8 @@ chart.init(
 | `onCompareAdded` | `BridgeEvent.CompareAdded` | Compare symbol added — `.symbol`, `.color` |
 | `onCompareRemoved` | `BridgeEvent.CompareRemoved` | Compare symbol removed — `.symbol` |
 | `onCompareError` | `BridgeEvent.CompareError` | Compare fetch / add failed — `.symbol`, `.message` |
+| `onIndicatorAdded` | `BridgeEvent.IndicatorAdded` | Study instance added — `.instanceId`, `.shortName`, `.params`; keep `instanceId` to remove that instance later |
+| `onIndicatorRemoved` | `BridgeEvent.IndicatorRemoved` | Study instance removed — `.instanceId`, `.shortName` |
 | `onError` | `BridgeEvent.Error` | Engine error — `.message`, `.code` |
 | `onBridgeEvent` | `BridgeEvent` | Generic — fires for every event including those with typed callbacks |
 
@@ -425,6 +427,28 @@ chart.clearCompares()
 
 When at least one compare is active the Y-axis switches to percent
 (`+12.34%` / `-5.67%`); removing every compare returns it to absolute prices.
+
+## Multiple instances of the same study
+
+Parameterized studies (EMA, SMA, RSI, BB, …) support multiple simultaneous
+instances, each with an auto-cycled color:
+
+```kotlin
+chart.addIndicator("EMA", mapOf("period" to 20))
+chart.addIndicator("EMA", mapOf("period" to 50))   // a 2nd EMA, distinct color
+chart.addIndicator("EMA", mapOf("period" to 200))  // a 3rd
+
+// Track instance ids so you can remove a specific one.
+val emaIds = mutableListOf<String>()
+chart.onIndicatorAdded   = { evt -> if (evt.shortName == "EMA") emaIds.add(evt.instanceId) }
+chart.onIndicatorRemoved = { evt -> emaIds.remove(evt.instanceId) }
+
+chart.removeIndicator(emaIds.first())  // remove just that instance ("EMA#1")
+chart.removeIndicator("EMA")           // or remove ALL EMA instances
+```
+
+A few studies stay single-instance and toggle off when re-added: `VOL`, `OBV`,
+`A/D`, `AO`, `VWAP`, `Ichimoku`, `PSAR`, `Pivot`, and Heikin-Ashi.
 
 ## Handling the hardware back button
 

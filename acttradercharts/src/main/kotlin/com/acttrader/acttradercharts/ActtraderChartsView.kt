@@ -266,6 +266,13 @@ class ActtraderChartsView @JvmOverloads constructor(
     /** Called when adding a compare or fetching its bars fails. */
     var onCompareError: ((BridgeEvent.CompareError) -> Unit)? = null
 
+    /** Called when a study instance is added. Keep [BridgeEvent.IndicatorAdded.instanceId]
+     *  to later remove that specific instance via [removeIndicator]. */
+    var onIndicatorAdded: ((BridgeEvent.IndicatorAdded) -> Unit)? = null
+
+    /** Called when a study instance is removed (pill ×, settings dialog, or [removeIndicator]). */
+    var onIndicatorRemoved: ((BridgeEvent.IndicatorRemoved) -> Unit)? = null
+
     /** Called when the chart engine reports an error. */
     var onError: ((BridgeEvent.Error) -> Unit)? = null
 
@@ -330,6 +337,8 @@ class ActtraderChartsView @JvmOverloads constructor(
             is BridgeEvent.CompareAdded        -> onCompareAdded?.invoke(event)
             is BridgeEvent.CompareRemoved      -> onCompareRemoved?.invoke(event)
             is BridgeEvent.CompareError        -> onCompareError?.invoke(event)
+            is BridgeEvent.IndicatorAdded      -> onIndicatorAdded?.invoke(event)
+            is BridgeEvent.IndicatorRemoved    -> onIndicatorRemoved?.invoke(event)
             is BridgeEvent.Error               -> onError?.invoke(event)
         }
     }
@@ -570,12 +579,22 @@ class ActtraderChartsView @JvmOverloads constructor(
 
     /**
      * Adds a study by short name (e.g. `"SMA"`, `"EMA"`, `"RSI"`, `"BB"`).
+     *
+     * Parameterized studies support multiple simultaneous instances: each call
+     * adds a new instance (with an auto-cycled color). Listen to [onIndicatorAdded]
+     * for the resulting `instanceId`. A few studies are single-instance and toggle
+     * instead (`VOL`, `OBV`, `A/D`, `AO`, `VWAP`, `Ichimoku`, `PSAR`, `Pivot`, `HA`).
+     *
      * @param params Optional parameters, e.g. `mapOf("period" to 20)`.
      */
     fun addIndicator(name: String, params: Map<String, Any>? = null) =
         sendCommand(BridgeCommand.AddIndicator(name, params))
 
-    /** Removes a study by name. */
+    /**
+     * Removes a study. Pass an `instanceId` (e.g. `"EMA#3"`, from [onIndicatorAdded])
+     * to remove that single instance, or a short name (e.g. `"EMA"`) to remove **all**
+     * instances of that study.
+     */
     fun removeIndicator(name: String) = sendCommand(BridgeCommand.RemoveIndicator(name))
 
     /**

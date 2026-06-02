@@ -291,6 +291,27 @@ sealed class BridgeEvent {
     /** Adding a compare or fetching its bars failed. */
     data class CompareError(val symbol: String, val message: String) : BridgeEvent()
 
+    /**
+     * A study instance was added. Multiple instances of the same study can be
+     * active at once (e.g. EMA-20, EMA-50). Keep [instanceId] to later remove
+     * this specific instance via [ActtraderChartsView.removeIndicator].
+     *
+     * @param instanceId Unique per-instance id (e.g. `"EMA#3"`).
+     * @param shortName  Study short name (e.g. `"EMA"`).
+     * @param params     Resolved params (period, color, source, timeframe, …).
+     */
+    data class IndicatorAdded(
+        val instanceId: String,
+        val shortName: String,
+        val params: Map<String, Any>,
+    ) : BridgeEvent()
+
+    /** A study instance was removed (pill ×, settings dialog, or removeIndicator). */
+    data class IndicatorRemoved(
+        val instanceId: String,
+        val shortName: String,
+    ) : BridgeEvent()
+
     /** An error occurred inside the chart engine. */
     data class Error(val message: String, val code: String? = null) : BridgeEvent()
 }
@@ -514,6 +535,20 @@ object BridgeEventParser {
             "compareError" -> BridgeEvent.CompareError(
                 symbol  = p.getString("symbol"),
                 message = p.optString("message", ""),
+            )
+
+            "indicatorAdded" -> {
+                val paramsObj = p.optJSONObject("params") ?: JSONObject()
+                BridgeEvent.IndicatorAdded(
+                    instanceId = p.getString("instanceId"),
+                    shortName  = p.getString("shortName"),
+                    params     = paramsObj.keys().asSequence().associateWith { paramsObj.get(it) },
+                )
+            }
+
+            "indicatorRemoved" -> BridgeEvent.IndicatorRemoved(
+                instanceId = p.getString("instanceId"),
+                shortName  = p.getString("shortName"),
             )
 
             "error" -> BridgeEvent.Error(
