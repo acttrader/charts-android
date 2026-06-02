@@ -488,6 +488,12 @@ class ActtraderChartsView @JvmOverloads constructor(
         /** Maximum concurrent compare symbols. Adding beyond emits [BridgeEvent.CompareError]. Default: `8`. */
         maxCompares: Int? = null,
         /**
+         * Initial state of the layout popover's cross-pane sync toggles (only
+         * meaningful with [enableMultipleLayouts]). Partial — `null` fields use the
+         * library default. Change later on a live chart via [setLayoutSync].
+         */
+        layoutSync: LayoutSync? = null,
+        /**
          * Raw JSON string from a prior [onStateSnapshot] callback. When provided, the full chart state
          * (timeframe, series, indicators, drawings, etc.) is restored atomically alongside the init
          * command — both are evaluated in a single `evaluateJavascript` call, so there is no
@@ -532,6 +538,7 @@ class ActtraderChartsView @JvmOverloads constructor(
         hideHeader = hideHeader,
         initialCompares = initialCompares,
         maxCompares = maxCompares,
+        layoutSync = layoutSync,
         )
         if (stateJson == null) {
             sendCommand(initCmd)
@@ -560,6 +567,14 @@ class ActtraderChartsView @JvmOverloads constructor(
      * Accepts any IANA string (e.g. `"America/New_York"`), `"UTC"`, or `"local"`.
      */
     fun setTimezone(timezone: String) = sendCommand(BridgeCommand.SetTimezone(timezone))
+
+    /**
+     * Updates the chart-owned layout popover's cross-pane sync toggles (Symbol /
+     * Interval / Crosshair / Time / Date range). Partial — `null` fields keep
+     * their current value. Only has an effect when `enableMultipleLayouts = true`
+     * was passed to [init]. Use to restore a user's persisted sync preferences.
+     */
+    fun setLayoutSync(sync: LayoutSync) = sendCommand(BridgeCommand.SetLayoutSync(sync))
 
     /**
      * Changes the chart series type.

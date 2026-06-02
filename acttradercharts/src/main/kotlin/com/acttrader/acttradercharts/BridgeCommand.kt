@@ -16,6 +16,28 @@ private fun JSONObject.putJson(key: String, json: String) {
 }
 
 /**
+ * Cross-pane sync toggles for the chart-owned layout popover (Symbol / Interval
+ * / Crosshair / Time / Date range). All fields are nullable — a `null` field is
+ * omitted from the payload and keeps its current (or library-default) value on
+ * the chart side. Only meaningful when `enableMultipleLayouts = true`.
+ */
+data class LayoutSync(
+    val symbol: Boolean? = null,
+    val interval: Boolean? = null,
+    val crosshair: Boolean? = null,
+    val time: Boolean? = null,
+    val dateRange: Boolean? = null,
+) {
+    fun toJson(): JSONObject = JSONObject().apply {
+        symbol?.let { put("symbol", it) }
+        interval?.let { put("interval", it) }
+        crosshair?.let { put("crosshair", it) }
+        time?.let { put("time", it) }
+        dateRange?.let { put("dateRange", it) }
+    }
+}
+
+/**
  * Commands sent from native Android code to the chart WebView.
  * Each subclass serialises itself to the JSON format expected by `window.ChartBridge.send()`.
  *
@@ -159,6 +181,13 @@ sealed class BridgeCommand {
         val initialCompares: List<String>? = null,
         /** Maximum concurrent compare symbols. Adding beyond emits [BridgeEvent.CompareError]. Default: `8`. */
         val maxCompares: Int? = null,
+        /**
+         * Initial state of the chart-owned layout popover's cross-pane sync
+         * toggles (only meaningful with [enableMultipleLayouts]). Partial — any
+         * `null` field falls back to the library default. Change it later on a
+         * live chart via [ActtraderChartsView.setLayoutSync].
+         */
+        val layoutSync: LayoutSync? = null,
     ) : BridgeCommand() {
         override fun toJson(): String = JSONObject().apply {
             put("type", "init")
@@ -219,6 +248,7 @@ sealed class BridgeCommand {
                 hideHeader?.let { put("hideHeader", it) }
                 initialCompares?.let { put("initialCompares", JSONArray(it)) }
                 maxCompares?.let { put("maxCompares", it) }
+                layoutSync?.let { put("layoutSync", it.toJson()) }
             })
         }.toString()
     }
@@ -286,6 +316,18 @@ sealed class BridgeCommand {
             put("payload", JSONObject().apply {
                 put("timezone", timezone)
             })
+        }.toString()
+    }
+
+    /**
+     * Updates the chart-owned layout popover's cross-pane sync toggles. Partial —
+     * `null` fields keep their current value. Only meaningful with
+     * `enableMultipleLayouts = true`.
+     */
+    data class SetLayoutSync(val sync: LayoutSync) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setLayoutSync")
+            put("payload", sync.toJson())
         }.toString()
     }
 

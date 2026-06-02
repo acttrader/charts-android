@@ -140,6 +140,7 @@ parentLayout.addView(chart)
 | `resetData()` | Clear all bars, the live price line, any in-flight fetch, **all user drawings, and all trade/position levels** (including pending draft orders). Call before switching to a new symbol to prevent previous symbol state from bleeding in (see example below). For a same-symbol data refresh that should preserve drawings, call `loadData(emptyList())` directly instead |
 | `setLoading(loading)` | Show or hide the loading overlay |
 | `setTimezone(timezone)` | Change display timezone at runtime — IANA string (`"America/New_York"`) or `"local"` |
+| `setLayoutSync(sync)` | Update the layout popover's cross-pane sync toggles (`LayoutSync`, partial). Only with `enableMultipleLayouts = true`. See [Multi-pane layouts](#multi-pane-layouts--snapshot) |
 | `setThemeOverrides(overrides)` | Update per-theme color overrides at runtime — accepts typed `ThemeOverrides` or raw JSON string |
 | `correctBar(barTime, bar)` | Replace a specific bar with authoritative OHLCV data (e.g. server correction) |
 | **Compare** | |
@@ -360,6 +361,7 @@ chart.init(
     headerLayout          = "advanced",   // "simple" (default) | "advanced" | "compact"
     enableMultipleLayouts = true,         // Layout button + preset picker
     enableSnapshot        = true,         // Snapshot button + Download/Copy
+    layoutSync            = LayoutSync(symbol = false, interval = true), // optional — seed the sync toggles
 )
 
 chart.onLayoutChange = { evt ->
@@ -390,6 +392,24 @@ chart.onSnapshot = { evt ->
 > JS-side `ChartGroup` only operates inside one WebView. On mobile each pane
 > is its own `ActtraderChartsView`, so coordinate from native code (e.g. set
 > the same timeframe on all panes when `syncJson["interval"]` is `true`).
+
+### Seeding & restoring the sync toggles
+
+The layout popover's five sync toggles default to the library's `DEFAULT_LAYOUT_SYNC`.
+Pass a partial `LayoutSync` to `init` to open the popover in a saved state, and
+call `setLayoutSync(...)` to update an already-mounted chart (e.g. mirroring a
+native settings screen). Omitted (`null`) fields keep their current value.
+
+```kotlin
+// Seed at init — restore the user's persisted preference
+chart.init(
+    enableMultipleLayouts = true,
+    layoutSync = LayoutSync(symbol = false, interval = false, crosshair = false, time = false, dateRange = false),
+)
+
+// Update later — partial; other toggles unchanged. No layoutChange echo.
+chart.setLayoutSync(LayoutSync(crosshair = true))
+```
 
 ## Compare symbols
 
