@@ -235,6 +235,10 @@ sealed class BridgeEvent {
     /** User tapped the symbol name; fires when `onSymbolClick` is enabled in the init command. */
     data class SymbolClick(val symbol: String) : BridgeEvent()
 
+    /** User tapped the "Ask AI" (✦) button in the mobile header; fires when
+     *  `onAskAiClick` is enabled in the init command. */
+    object AskAiClick : BridgeEvent()
+
     /**
      * User picked a layout preset or toggled a cross-pane sync option in the
      * chart-owned LayoutPopover. Fires only when `enableMultipleLayouts` is set
@@ -505,6 +509,8 @@ object BridgeEventParser {
             "uiStateChange" -> BridgeEvent.UiStateChange(p.optBoolean("hasOpenUI", false))
 
             "symbolClick" -> BridgeEvent.SymbolClick(p.optString("symbol", ""))
+
+            "askAiClick" -> BridgeEvent.AskAiClick
 
             "layoutChange" -> BridgeEvent.LayoutChange(
                 presetId = p.getString("presetId"),

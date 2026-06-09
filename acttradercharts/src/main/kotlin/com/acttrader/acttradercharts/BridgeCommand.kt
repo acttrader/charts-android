@@ -144,13 +144,21 @@ sealed class BridgeCommand {
         val durationTimeframeMap: Map<String, String>? = null,
         /** When true, fires a `symbolClick` bridge event on symbol tap instead of opening the picker modal. */
         val onSymbolClick: Boolean = false,
+        /**
+         * When true, the `"mobile"` header renders an "Ask AI" (✦) button that fires
+         * a [BridgeEvent.AskAiClick] event on tap. No effect in other header layouts.
+         * Default: `false` (button hidden).
+         */
+        val onAskAiClick: Boolean = false,
         /** IANA timezone string for time-axis and crosshair labels. Default: `"UTC"`. */
         val timezone: String? = null,
         /**
          * Top-bar variant. `"simple"` (default) shows the classic TopBar; `"advanced"`
          * uses the compact pill-style AdvancedToolbar; `"compact"` uses the slim
          * per-pane CompactToolbar — recommended only when this chart is one cell
-         * of a host-rendered multi-pane grid.
+         * of a host-rendered multi-pane grid; `"mobile"` renders the compact mobile
+         * header (Tools button · timeframe pills · optional Ask AI button) — gate it
+         * yourself, e.g. `headerLayout = if (isMobile) "mobile" else null`.
          */
         val headerLayout: String? = null,
         /**
@@ -241,6 +249,7 @@ sealed class BridgeCommand {
                 labelsJson?.let { putJson("labels", it) }
                 uiConfigJson?.let { putJson("uiConfig", it) }
                 if (onSymbolClick) put("onSymbolClick", true)
+                if (onAskAiClick) put("onAskAiClick", true)
                 timezone?.let { put("timezone", it) }
                 headerLayout?.let { put("headerLayout", it) }
                 enableMultipleLayouts?.let { put("enableMultipleLayouts", it) }

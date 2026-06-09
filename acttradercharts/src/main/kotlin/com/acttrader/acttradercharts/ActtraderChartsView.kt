@@ -236,6 +236,13 @@ class ActtraderChartsView @JvmOverloads constructor(
     var onSymbolClick: ((BridgeEvent.SymbolClick) -> Unit)? = null
 
     /**
+     * Called when the user taps the "Ask AI" (✦) button in the mobile header and
+     * `onAskAiClick = true` was passed to [init] (only meaningful with
+     * `headerLayout = "mobile"`).
+     */
+    var onAskAiClick: (() -> Unit)? = null
+
+    /**
      * Called when the user picks a layout preset or toggles a cross-pane sync
      * option in the chart-owned multi-layout popover. Fires only when
      * `enableMultipleLayouts = true` was passed to [init].
@@ -331,6 +338,7 @@ class ActtraderChartsView @JvmOverloads constructor(
             }
             is BridgeEvent.DataRequest         -> onDataRequest?.invoke(event)
             is BridgeEvent.SymbolClick         -> onSymbolClick?.invoke(event)
+            is BridgeEvent.AskAiClick          -> onAskAiClick?.invoke()
             is BridgeEvent.LayoutChange        -> onLayoutChange?.invoke(event)
             is BridgeEvent.Snapshot            -> onSnapshot?.invoke(event)
             is BridgeEvent.CompareDataRequest  -> onCompareDataRequest?.invoke(event)
@@ -449,12 +457,19 @@ class ActtraderChartsView @JvmOverloads constructor(
         durationTimeframeMap: Map<String, String>? = null,
         /** When true, fires [BridgeEvent.SymbolClick] on symbol tap instead of opening the picker modal. */
         onSymbolClick: Boolean = false,
+        /**
+         * When true, the `"mobile"` header renders an "Ask AI" (✦) button that fires
+         * [BridgeEvent.AskAiClick] on tap. No effect in other header layouts. Default: `false`.
+         */
+        onAskAiClick: Boolean = false,
         /** IANA timezone string for time-axis and crosshair labels. Default: `"UTC"`. */
         timezone: String? = null,
         /**
          * Top-bar variant. `"simple"` (default) is the classic TopBar; `"advanced"`
          * is the pill-style AdvancedToolbar; `"compact"` is the slim per-pane
-         * CompactToolbar (intended for cells of a host-rendered multi-pane grid).
+         * CompactToolbar (intended for cells of a host-rendered multi-pane grid);
+         * `"mobile"` renders the compact mobile header (Tools · timeframe pills ·
+         * optional Ask AI button).
          */
         headerLayout: String? = null,
         /**
@@ -531,6 +546,7 @@ class ActtraderChartsView @JvmOverloads constructor(
         themeOverridesJson = themeOverridesJson ?: themeOverrides?.toJsonString(), labelsJson = labelsJson,
         uiConfigJson = uiConfigJson, durationTimeframeMap = durationTimeframeMap,
         onSymbolClick = onSymbolClick,
+        onAskAiClick = onAskAiClick,
         timezone = timezone,
         headerLayout = headerLayout,
         enableMultipleLayouts = enableMultipleLayouts,
