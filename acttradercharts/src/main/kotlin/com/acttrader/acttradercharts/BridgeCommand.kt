@@ -105,9 +105,9 @@ sealed class BridgeCommand {
         /**
          * Always render SL/TP bracket lines + price pills, even when the parent
          * trade level is not hovered/selected. Close (×) buttons remain hover-only.
-         * Default: `false`.
+         * Default: `true`. Set `false` to only show them on hover/selection.
          */
-        val showTradeLevelsAlways: Boolean? = null,
+        val showTradeLevelsAlways: Boolean? = true,
         /**
          * Show the candle countdown timer on the right price axis, just below the
          * live price tag. Subject to the same `candleCountdownTimeframes` filter.

@@ -400,8 +400,8 @@ class ActtraderChartsView @JvmOverloads constructor(
          * Default: `false`.
          */
         deselectActiveOnOutsideClick: Boolean? = null,
-        /** Always render SL/TP bracket lines + price pills, even without hover. Default: `false`. */
-        showTradeLevelsAlways: Boolean? = null,
+        /** Always render SL/TP bracket lines + price pills, even without hover. Default: `true`; pass `false` to show them only on hover/selection. */
+        showTradeLevelsAlways: Boolean? = true,
         /** Show candle countdown timer on the right price axis under the live price tag. Default: `false`. */
         showPriceAxisCountdown: Boolean? = null,
         /**
