@@ -270,6 +270,17 @@ All properties at every level are optional — only supply the ones you want to 
 
 > Raw JSON strings are still supported via `themeOverridesJson` / `setThemeOverrides(jsonString)` for backward compatibility.
 
+### Fonts
+
+The chart renders inside an Android `WebView`. The symbol name, O/H/L/C strip, and toolbar
+text inherit the WebView document's `body` font. The bundled `chart.html` sets a
+system-font stack (`'Inter', system-ui, -apple-system, …`), so these render in **Roboto** —
+no setup required.
+
+> Fixed in the ActCharts chart bundle: earlier bundles set no `body` font, so the symbol
+> name and OHLC strip fell back to the WebView's default **serif**. Updating to a build with
+> the current `chart.html` resolves it — there are no Kotlin API changes.
+
 ### Mobile icon sizing
 
 The chart automatically bumps top-bar icon buttons (settings, fullscreen, drawing toggle) and the floating trade ⊕ button to larger sizes when the container width drops below `uiConfig.drawingToolbar.mobileBreakpoint` (default `480px`). Defaults:
