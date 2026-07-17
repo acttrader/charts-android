@@ -94,7 +94,7 @@ parentLayout.addView(chart)
 |--------|-------------|
 | `init(...)` | Initialise the chart engine — call from `onReady` before `loadData` (see params below) |
 | `loadData(bars, fitAll)` | Replace full dataset |
-| `pushTick(bid, ask, timestamp)` | Stream a live tick |
+| `pushTick(bid, ask, timestamp, ltp?, ltpv?)` | Stream a live tick. `ltp`/`ltpv` (last traded price/volume) are optional — sent by exchange/dealing feeds and used when `tickClosePriceSource = "ltp"`, e.g. `chart.pushTick(1.2055, 1.2057, ts, 1.2056, 120.0)` |
 | `setTheme("dark" \| "light")` | Switch theme |
 | `setTimeframe(timeframe)` | `"1m"` `"5m"` `"15m"` `"30m"` `"1h"` `"4h"` `"1D"` `"1W"` `"1M"` `"1Y"` |
 | `setSeries(type)` | Change chart type (`"candlestick"`, `"hollow_candle"`, `"line"`, `"area"`, `"ohlc"`) |
@@ -192,7 +192,7 @@ chart.loadData(bars)
 | `momentumThreshold` | `Double?` | `null` | Min release velocity (px/ms) to launch momentum. Default: `0.3` |
 | `momentumMaxVelocity` | `Double?` | `null` | Max launch velocity (px/ms). Default: `6.0` |
 | `targetCandleWidth` | `Double?` | `null` | Target px width per candle for auto-calculating initial bar count |
-| `tickClosePriceSource` | `String?` | `null` | `"bid"` or `"ask"` for live tick close/high/low |
+| `tickClosePriceSource` | `String?` | `null` | `"bid"` (default), `"ask"`, or `"ltp"` for live tick close/high/low. `"ltp"` builds candles from the last traded price (exchange/dealing feeds); ticks without a valid LTP fall back to the bid |
 | `tradesThresholdForHorizontalLine` | `Int?` | `null` | Level count above which render auto-switches to dot mode |
 | `tradeDisplayFilter` | `String?` | `null` | Which TFC levels are visible: `"all"` · `"positions"` · `"orders"` · `"none"` |
 | `positionRenderStyle` | `String?` | `null` | Force position render style: `"line"` or `"dot"` |

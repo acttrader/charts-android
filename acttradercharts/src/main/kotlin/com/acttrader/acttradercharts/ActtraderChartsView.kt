@@ -395,6 +395,9 @@ class ActtraderChartsView @JvmOverloads constructor(
         /** Maximum launch velocity (px/ms) for momentum. Default: `6.0`. */
         momentumMaxVelocity: Double? = null,
         targetCandleWidth: Double? = null,
+        /** Which price drives live candle close/high/low: `"bid"` (default), `"ask"`,
+         *  or `"ltp"` — build candles from the last traded price (exchange/dealing
+         *  feeds); ticks without a valid LTP fall back to the bid. */
         tickClosePriceSource: String? = null,
         tradesThresholdForHorizontalLine: Int? = null,
         tradeDisplayFilter: String? = null,
@@ -604,9 +607,14 @@ class ActtraderChartsView @JvmOverloads constructor(
     /**
      * Pushes a live tick for streaming updates.
      * The bridge aggregates ticks into the current candle; use [loadData] for bulk replacement.
+     *
+     * @param ltp Last traded price — optional, sent by exchange/dealing feeds and
+     *   consumed when `tickClosePriceSource = "ltp"`; ticks without it fall back to the bid.
+     * @param ltpv Last traded volume — optional, accompanies [ltp] on trade ticks.
      */
-    fun pushTick(bid: Double, ask: Double, timestamp: Long) =
-        sendCommand(BridgeCommand.PushTick(bid, ask, timestamp))
+    @JvmOverloads
+    fun pushTick(bid: Double, ask: Double, timestamp: Long, ltp: Double? = null, ltpv: Double? = null) =
+        sendCommand(BridgeCommand.PushTick(bid, ask, timestamp, ltp, ltpv))
 
     /**
      * Adds a study by short name (e.g. `"SMA"`, `"EMA"`, `"RSI"`, `"BB"`).
