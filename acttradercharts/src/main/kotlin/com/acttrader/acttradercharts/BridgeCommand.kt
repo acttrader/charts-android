@@ -88,6 +88,9 @@ sealed class BridgeCommand {
         /** Maximum launch velocity (px/ms) for momentum. Default: `6.0`. */
         val momentumMaxVelocity: Double? = null,
         val targetCandleWidth: Double? = null,
+        /** Which price drives live candle close/high/low: `"bid"` (default), `"ask"`,
+         *  or `"ltp"` — build candles from the last traded price (exchange/dealing
+         *  feeds); ticks without a valid LTP fall back to the bid. */
         val tickClosePriceSource: String? = null,
         val tradesThresholdForHorizontalLine: Int? = null,
         val tradeDisplayFilter: String? = null,
@@ -287,11 +290,15 @@ sealed class BridgeCommand {
         }.toString()
     }
 
-    /** Pushes a live tick (bid/ask/timestamp) for streaming updates. */
+    /** Pushes a live tick (bid/ask/timestamp) for streaming updates.
+     *  [ltp]/[ltpv] (last traded price/volume) are optional — sent by
+     *  exchange/dealing feeds and consumed when `tickClosePriceSource = "ltp"`. */
     data class PushTick(
         val bid: Double,
         val ask: Double,
         val timestamp: Long,
+        val ltp: Double? = null,
+        val ltpv: Double? = null,
     ) : BridgeCommand() {
         override fun toJson(): String = JSONObject().apply {
             put("type", "pushTick")
@@ -299,6 +306,8 @@ sealed class BridgeCommand {
                 put("B", bid)
                 put("A", ask)
                 put("T", timestamp)
+                ltp?.let { put("LTP", it) }
+                ltpv?.let { put("LTPV", it) }
             })
         }.toString()
     }
