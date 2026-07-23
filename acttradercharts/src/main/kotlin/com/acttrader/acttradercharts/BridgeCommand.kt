@@ -61,6 +61,12 @@ sealed class BridgeCommand {
         val showUI: Boolean? = null,
         val showDrawingTools: Boolean? = null,
         val showBidAskLines: Boolean? = null,
+        /** Show the Ask price line independently. `null` falls back to the
+         *  legacy [showBidAskLines] behavior. */
+        val showAskLine: Boolean? = null,
+        /** Show the Bid price line independently. `null` falls back to the
+         *  legacy [showBidAskLines] behavior. */
+        val showBidLine: Boolean? = null,
         val showActLogo: Boolean? = null,
         val showCandleCountdown: Boolean? = null,
         val candleCountdownTimeframes: List<String>? = null,
@@ -92,6 +98,10 @@ sealed class BridgeCommand {
          *  or `"ltp"` — build candles from the last traded price (exchange/dealing
          *  feeds); ticks without a valid LTP fall back to the bid. */
         val tickClosePriceSource: String? = null,
+        /** Show the LTP marker (dashed price line + axis tag). `null` (default):
+         *  shown only in `"ltp"` mode. `true`: always shown when the feed supplies
+         *  an LTP. `false`: hidden even in `"ltp"` mode. */
+        val showLtpPrice: Boolean? = null,
         val tradesThresholdForHorizontalLine: Int? = null,
         val tradeDisplayFilter: String? = null,
         val positionRenderStyle: String? = null,
@@ -215,6 +225,8 @@ sealed class BridgeCommand {
                 showUI?.let { put("showUI", it) }
                 showDrawingTools?.let { put("showDrawingTools", it) }
                 showBidAskLines?.let { put("showBidAskLines", it) }
+                showAskLine?.let { put("showAskLine", it) }
+                showBidLine?.let { put("showBidLine", it) }
                 showActLogo?.let { put("showActLogo", it) }
                 showCandleCountdown?.let { put("showCandleCountdown", it) }
                 candleCountdownTimeframes?.let { put("candleCountdownTimeframes", JSONArray(it)) }
@@ -229,6 +241,7 @@ sealed class BridgeCommand {
                 momentumMaxVelocity?.let { put("momentumMaxVelocity", it) }
                 targetCandleWidth?.let { put("targetCandleWidth", it) }
                 tickClosePriceSource?.let { put("tickClosePriceSource", it) }
+                showLtpPrice?.let { put("showLtpPrice", it) }
                 tradesThresholdForHorizontalLine?.let { put("tradesThresholdForHorizontalLine", it) }
                 tradeDisplayFilter?.let { put("tradeDisplayFilter", it) }
                 positionRenderStyle?.let { put("positionRenderStyle", it) }
@@ -309,6 +322,15 @@ sealed class BridgeCommand {
                 ltp?.let { put("LTP", it) }
                 ltpv?.let { put("LTPV", it) }
             })
+        }.toString()
+    }
+
+    /** Shows/hides the LTP price marker at runtime. Pass `null` to restore the
+     *  default (marker follows `tickClosePriceSource = "ltp"`). */
+    data class SetShowLtpPrice(val show: Boolean?) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setShowLtpPrice")
+            put("payload", JSONObject().apply { show?.let { put("show", it) } })
         }.toString()
     }
 

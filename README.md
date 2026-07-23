@@ -95,6 +95,7 @@ parentLayout.addView(chart)
 | `init(...)` | Initialise the chart engine — call from `onReady` before `loadData` (see params below) |
 | `loadData(bars, fitAll)` | Replace full dataset |
 | `pushTick(bid, ask, timestamp, ltp?, ltpv?)` | Stream a live tick. `ltp`/`ltpv` (last traded price/volume) are optional — sent by exchange/dealing feeds and used when `tickClosePriceSource = "ltp"`, e.g. `chart.pushTick(1.2055, 1.2057, ts, 1.2056, 120.0)` |
+| `setShowLtpPrice(show?)` | Show/hide the LTP price marker at runtime; pass `null` to restore the default (marker follows `tickClosePriceSource = "ltp"`) |
 | `setTheme("dark" \| "light")` | Switch theme |
 | `setTimeframe(timeframe)` | `"1m"` `"5m"` `"15m"` `"30m"` `"1h"` `"4h"` `"1D"` `"1W"` `"1M"` `"1Y"` |
 | `setSeries(type)` | Change chart type (`"candlestick"`, `"hollow_candle"`, `"line"`, `"area"`, `"ohlc"`) |
@@ -174,7 +175,9 @@ chart.loadData(bars)
 | `showVolume` | `Boolean?` | `null` | Show volume bars |
 | `showUI` | `Boolean?` | `null` | Show top / bottom bars. When `false`, the loading overlay is also suppressed |
 | `showDrawingTools` | `Boolean?` | `null` | Show drawing toolbar and pencil button |
-| `showBidAskLines` | `Boolean?` | `null` | Show bid and ask as dashed lines during a live stream |
+| `showBidAskLines` | `Boolean?` | `null` | **Deprecated** — show bid and ask as dashed lines during a live stream. Prefer `showAskLine` / `showBidLine` |
+| `showAskLine` | `Boolean?` | `null` | Show the Ask price line independently. `null`: legacy `showBidAskLines` behavior |
+| `showBidLine` | `Boolean?` | `null` | Show the Bid price line independently. `null`: legacy `showBidAskLines` behavior |
 | `showActLogo` | `Boolean?` | `null` | Show ACT watermark logo |
 | `showCandleCountdown` | `Boolean?` | `null` | Show countdown timer on the live candle (time axis) |
 | `candleCountdownTimeframes` | `List<String>?` / `"all"` | `null` | Timeframes where the countdown appears |
@@ -193,6 +196,7 @@ chart.loadData(bars)
 | `momentumMaxVelocity` | `Double?` | `null` | Max launch velocity (px/ms). Default: `6.0` |
 | `targetCandleWidth` | `Double?` | `null` | Target px width per candle for auto-calculating initial bar count |
 | `tickClosePriceSource` | `String?` | `null` | `"bid"` (default), `"ask"`, or `"ltp"` for live tick close/high/low. `"ltp"` builds candles from the last traded price (exchange/dealing feeds); ticks without a valid LTP fall back to the bid |
+| `showLtpPrice` | `Boolean?` | `null` | Show the LTP marker (dashed price line + axis tag). `null`: shown only in `"ltp"` mode. `true`: always shown when the feed supplies an LTP. `false`: hidden even in `"ltp"` mode |
 | `tradesThresholdForHorizontalLine` | `Int?` | `null` | Level count above which render auto-switches to dot mode |
 | `tradeDisplayFilter` | `String?` | `null` | Which TFC levels are visible: `"all"` · `"positions"` · `"orders"` · `"none"` |
 | `positionRenderStyle` | `String?` | `null` | Force position render style: `"line"` or `"dot"` |
