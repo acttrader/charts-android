@@ -368,6 +368,12 @@ class ActtraderChartsView @JvmOverloads constructor(
         showUI: Boolean? = null,
         showDrawingTools: Boolean? = null,
         showBidAskLines: Boolean? = null,
+        /** Show the Ask price line independently. `null` falls back to the
+         *  legacy [showBidAskLines] behavior. */
+        showAskLine: Boolean? = null,
+        /** Show the Bid price line independently. `null` falls back to the
+         *  legacy [showBidAskLines] behavior. */
+        showBidLine: Boolean? = null,
         showActLogo: Boolean? = null,
         showCandleCountdown: Boolean? = null,
         candleCountdownTimeframes: List<String>? = null,
@@ -399,6 +405,10 @@ class ActtraderChartsView @JvmOverloads constructor(
          *  or `"ltp"` — build candles from the last traded price (exchange/dealing
          *  feeds); ticks without a valid LTP fall back to the bid. */
         tickClosePriceSource: String? = null,
+        /** Show the LTP marker (dashed price line + axis tag). `null` (default):
+         *  shown only in `"ltp"` mode. `true`: always shown when the feed supplies
+         *  an LTP. `false`: hidden even in `"ltp"` mode. */
+        showLtpPrice: Boolean? = null,
         tradesThresholdForHorizontalLine: Int? = null,
         tradeDisplayFilter: String? = null,
         positionRenderStyle: String? = null,
@@ -524,7 +534,8 @@ class ActtraderChartsView @JvmOverloads constructor(
         theme = theme, symbol = symbol, series = series, timeframe = timeframe,
         duration = duration, enableTrading = enableTrading,
         showVolume = showVolume, showUI = showUI, showDrawingTools = showDrawingTools,
-        showBidAskLines = showBidAskLines, showActLogo = showActLogo,
+        showBidAskLines = showBidAskLines, showAskLine = showAskLine,
+        showBidLine = showBidLine, showActLogo = showActLogo,
         showCandleCountdown = showCandleCountdown,
         candleCountdownTimeframes = candleCountdownTimeframes,
         disableCountdownOnMobile = disableCountdownOnMobile,
@@ -533,6 +544,7 @@ class ActtraderChartsView @JvmOverloads constructor(
         momentumScrollEnabled = momentumScrollEnabled, momentumDecay = momentumDecay,
         momentumThreshold = momentumThreshold, momentumMaxVelocity = momentumMaxVelocity,
         targetCandleWidth = targetCandleWidth, tickClosePriceSource = tickClosePriceSource,
+        showLtpPrice = showLtpPrice,
         tradesThresholdForHorizontalLine = tradesThresholdForHorizontalLine,
         tradeDisplayFilter = tradeDisplayFilter, positionRenderStyle = positionRenderStyle,
         hideLevelConfirmCancel = hideLevelConfirmCancel,
@@ -615,6 +627,14 @@ class ActtraderChartsView @JvmOverloads constructor(
     @JvmOverloads
     fun pushTick(bid: Double, ask: Double, timestamp: Long, ltp: Double? = null, ltpv: Double? = null) =
         sendCommand(BridgeCommand.PushTick(bid, ask, timestamp, ltp, ltpv))
+
+    /**
+     * Shows/hides the LTP (last traded price) marker — dashed line + axis tag.
+     * Pass `null` to restore the default (shown only when `tickClosePriceSource = "ltp"`).
+     */
+    @JvmOverloads
+    fun setShowLtpPrice(show: Boolean? = null) =
+        sendCommand(BridgeCommand.SetShowLtpPrice(show))
 
     /**
      * Adds a study by short name (e.g. `"SMA"`, `"EMA"`, `"RSI"`, `"BB"`).
