@@ -236,6 +236,13 @@ class ActtraderChartsView @JvmOverloads constructor(
     var onSymbolClick: ((BridgeEvent.SymbolClick) -> Unit)? = null
 
     /**
+     * Called when the user taps the "Ask AI" (✦) button in the mobile header and
+     * `onAskAiClick = true` was passed to [init] (only meaningful with
+     * `headerLayout = "mobile"`).
+     */
+    var onAskAiClick: (() -> Unit)? = null
+
+    /**
      * Called when the user picks a layout preset or toggles a cross-pane sync
      * option in the chart-owned multi-layout popover. Fires only when
      * `enableMultipleLayouts = true` was passed to [init].
@@ -331,6 +338,7 @@ class ActtraderChartsView @JvmOverloads constructor(
             }
             is BridgeEvent.DataRequest         -> onDataRequest?.invoke(event)
             is BridgeEvent.SymbolClick         -> onSymbolClick?.invoke(event)
+            is BridgeEvent.AskAiClick          -> onAskAiClick?.invoke()
             is BridgeEvent.LayoutChange        -> onLayoutChange?.invoke(event)
             is BridgeEvent.Snapshot            -> onSnapshot?.invoke(event)
             is BridgeEvent.CompareDataRequest  -> onCompareDataRequest?.invoke(event)
@@ -360,6 +368,12 @@ class ActtraderChartsView @JvmOverloads constructor(
         showUI: Boolean? = null,
         showDrawingTools: Boolean? = null,
         showBidAskLines: Boolean? = null,
+        /** Show the Ask price line independently. `null` falls back to the
+         *  legacy [showBidAskLines] behavior. */
+        showAskLine: Boolean? = null,
+        /** Show the Bid price line independently. `null` falls back to the
+         *  legacy [showBidAskLines] behavior. */
+        showBidLine: Boolean? = null,
         showActLogo: Boolean? = null,
         showCandleCountdown: Boolean? = null,
         candleCountdownTimeframes: List<String>? = null,
@@ -387,7 +401,14 @@ class ActtraderChartsView @JvmOverloads constructor(
         /** Maximum launch velocity (px/ms) for momentum. Default: `6.0`. */
         momentumMaxVelocity: Double? = null,
         targetCandleWidth: Double? = null,
+        /** Which price drives live candle close/high/low: `"bid"` (default), `"ask"`,
+         *  or `"ltp"` — build candles from the last traded price (exchange/dealing
+         *  feeds); ticks without a valid LTP fall back to the bid. */
         tickClosePriceSource: String? = null,
+        /** Show the LTP marker (dashed price line + axis tag). `null` (default):
+         *  shown only in `"ltp"` mode. `true`: always shown when the feed supplies
+         *  an LTP. `false`: hidden even in `"ltp"` mode. */
+        showLtpPrice: Boolean? = null,
         tradesThresholdForHorizontalLine: Int? = null,
         tradeDisplayFilter: String? = null,
         positionRenderStyle: String? = null,
@@ -449,12 +470,19 @@ class ActtraderChartsView @JvmOverloads constructor(
         durationTimeframeMap: Map<String, String>? = null,
         /** When true, fires [BridgeEvent.SymbolClick] on symbol tap instead of opening the picker modal. */
         onSymbolClick: Boolean = false,
+        /**
+         * When true, the `"mobile"` header renders an "Ask AI" (✦) button that fires
+         * [BridgeEvent.AskAiClick] on tap. No effect in other header layouts. Default: `false`.
+         */
+        onAskAiClick: Boolean = false,
         /** IANA timezone string for time-axis and crosshair labels. Default: `"UTC"`. */
         timezone: String? = null,
         /**
          * Top-bar variant. `"simple"` (default) is the classic TopBar; `"advanced"`
          * is the pill-style AdvancedToolbar; `"compact"` is the slim per-pane
-         * CompactToolbar (intended for cells of a host-rendered multi-pane grid).
+         * CompactToolbar (intended for cells of a host-rendered multi-pane grid);
+         * `"mobile"` renders the compact mobile header (Tools · timeframe pills ·
+         * optional Ask AI button).
          */
         headerLayout: String? = null,
         /**
@@ -506,7 +534,8 @@ class ActtraderChartsView @JvmOverloads constructor(
         theme = theme, symbol = symbol, series = series, timeframe = timeframe,
         duration = duration, enableTrading = enableTrading,
         showVolume = showVolume, showUI = showUI, showDrawingTools = showDrawingTools,
-        showBidAskLines = showBidAskLines, showActLogo = showActLogo,
+        showBidAskLines = showBidAskLines, showAskLine = showAskLine,
+        showBidLine = showBidLine, showActLogo = showActLogo,
         showCandleCountdown = showCandleCountdown,
         candleCountdownTimeframes = candleCountdownTimeframes,
         disableCountdownOnMobile = disableCountdownOnMobile,
@@ -515,6 +544,7 @@ class ActtraderChartsView @JvmOverloads constructor(
         momentumScrollEnabled = momentumScrollEnabled, momentumDecay = momentumDecay,
         momentumThreshold = momentumThreshold, momentumMaxVelocity = momentumMaxVelocity,
         targetCandleWidth = targetCandleWidth, tickClosePriceSource = tickClosePriceSource,
+        showLtpPrice = showLtpPrice,
         tradesThresholdForHorizontalLine = tradesThresholdForHorizontalLine,
         tradeDisplayFilter = tradeDisplayFilter, positionRenderStyle = positionRenderStyle,
         hideLevelConfirmCancel = hideLevelConfirmCancel,
@@ -531,6 +561,7 @@ class ActtraderChartsView @JvmOverloads constructor(
         themeOverridesJson = themeOverridesJson ?: themeOverrides?.toJsonString(), labelsJson = labelsJson,
         uiConfigJson = uiConfigJson, durationTimeframeMap = durationTimeframeMap,
         onSymbolClick = onSymbolClick,
+        onAskAiClick = onAskAiClick,
         timezone = timezone,
         headerLayout = headerLayout,
         enableMultipleLayouts = enableMultipleLayouts,
@@ -588,9 +619,22 @@ class ActtraderChartsView @JvmOverloads constructor(
     /**
      * Pushes a live tick for streaming updates.
      * The bridge aggregates ticks into the current candle; use [loadData] for bulk replacement.
+     *
+     * @param ltp Last traded price — optional, sent by exchange/dealing feeds and
+     *   consumed when `tickClosePriceSource = "ltp"`; ticks without it fall back to the bid.
+     * @param ltpv Last traded volume — optional, accompanies [ltp] on trade ticks.
      */
-    fun pushTick(bid: Double, ask: Double, timestamp: Long) =
-        sendCommand(BridgeCommand.PushTick(bid, ask, timestamp))
+    @JvmOverloads
+    fun pushTick(bid: Double, ask: Double, timestamp: Long, ltp: Double? = null, ltpv: Double? = null) =
+        sendCommand(BridgeCommand.PushTick(bid, ask, timestamp, ltp, ltpv))
+
+    /**
+     * Shows/hides the LTP (last traded price) marker — dashed line + axis tag.
+     * Pass `null` to restore the default (shown only when `tickClosePriceSource = "ltp"`).
+     */
+    @JvmOverloads
+    fun setShowLtpPrice(show: Boolean? = null) =
+        sendCommand(BridgeCommand.SetShowLtpPrice(show))
 
     /**
      * Adds a study by short name (e.g. `"SMA"`, `"EMA"`, `"RSI"`, `"BB"`).

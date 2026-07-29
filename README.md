@@ -94,7 +94,8 @@ parentLayout.addView(chart)
 |--------|-------------|
 | `init(...)` | Initialise the chart engine — call from `onReady` before `loadData` (see params below) |
 | `loadData(bars, fitAll)` | Replace full dataset |
-| `pushTick(bid, ask, timestamp)` | Stream a live tick |
+| `pushTick(bid, ask, timestamp, ltp?, ltpv?)` | Stream a live tick. `ltp`/`ltpv` (last traded price/volume) are optional — sent by exchange/dealing feeds and used when `tickClosePriceSource = "ltp"`, e.g. `chart.pushTick(1.2055, 1.2057, ts, 1.2056, 120.0)` |
+| `setShowLtpPrice(show?)` | Show/hide the LTP price marker at runtime; pass `null` to restore the default (marker follows `tickClosePriceSource = "ltp"`) |
 | `setTheme("dark" \| "light")` | Switch theme |
 | `setTimeframe(timeframe)` | `"1m"` `"5m"` `"15m"` `"30m"` `"1h"` `"4h"` `"1D"` `"1W"` `"1M"` `"1Y"` |
 | `setSeries(type)` | Change chart type (`"candlestick"`, `"hollow_candle"`, `"line"`, `"area"`, `"ohlc"`) |
@@ -174,7 +175,9 @@ chart.loadData(bars)
 | `showVolume` | `Boolean?` | `null` | Show volume bars |
 | `showUI` | `Boolean?` | `null` | Show top / bottom bars. When `false`, the loading overlay is also suppressed |
 | `showDrawingTools` | `Boolean?` | `null` | Show drawing toolbar and pencil button |
-| `showBidAskLines` | `Boolean?` | `null` | Show bid and ask as dashed lines during a live stream |
+| `showBidAskLines` | `Boolean?` | `null` | **Deprecated** — show bid and ask as dashed lines during a live stream. Prefer `showAskLine` / `showBidLine` |
+| `showAskLine` | `Boolean?` | `null` | Show the Ask price line independently. `null`: legacy `showBidAskLines` behavior |
+| `showBidLine` | `Boolean?` | `null` | Show the Bid price line independently. `null`: legacy `showBidAskLines` behavior |
 | `showActLogo` | `Boolean?` | `null` | Show ACT watermark logo |
 | `showCandleCountdown` | `Boolean?` | `null` | Show countdown timer on the live candle (time axis) |
 | `candleCountdownTimeframes` | `List<String>?` / `"all"` | `null` | Timeframes where the countdown appears |
@@ -192,7 +195,8 @@ chart.loadData(bars)
 | `momentumThreshold` | `Double?` | `null` | Min release velocity (px/ms) to launch momentum. Default: `0.3` |
 | `momentumMaxVelocity` | `Double?` | `null` | Max launch velocity (px/ms). Default: `6.0` |
 | `targetCandleWidth` | `Double?` | `null` | Target px width per candle for auto-calculating initial bar count |
-| `tickClosePriceSource` | `String?` | `null` | `"bid"` or `"ask"` for live tick close/high/low |
+| `tickClosePriceSource` | `String?` | `null` | `"bid"` (default), `"ask"`, or `"ltp"` for live tick close/high/low. `"ltp"` builds candles from the last traded price (exchange/dealing feeds); ticks without a valid LTP fall back to the bid |
+| `showLtpPrice` | `Boolean?` | `null` | Show the LTP marker (dashed price line + axis tag). `null`: shown only in `"ltp"` mode. `true`: always shown when the feed supplies an LTP. `false`: hidden even in `"ltp"` mode |
 | `tradesThresholdForHorizontalLine` | `Int?` | `null` | Level count above which render auto-switches to dot mode |
 | `tradeDisplayFilter` | `String?` | `null` | Which TFC levels are visible: `"all"` · `"positions"` · `"orders"` · `"none"` |
 | `positionRenderStyle` | `String?` | `null` | Force position render style: `"line"` or `"dot"` |
@@ -270,30 +274,16 @@ All properties at every level are optional — only supply the ones you want to 
 
 > Raw JSON strings are still supported via `themeOverridesJson` / `setThemeOverrides(jsonString)` for backward compatibility.
 
-#### Fib Retracement ratios
+### Fonts
 
-Tapping a Fib Retracement on the chart and opening **LEVELS → Configure ▾** lets the user retype each level's ratio next to its visibility checkbox and color swatch. The line moves to the new ratio keeping its color and visibility, and the number of levels stays the same — a value that isn't a finite number, or that another row already uses, reverts. This is in-WebView chart UI: it needs **no config flag and no native call**, and works on touch as soon as the bundled `chart.html` includes it.
+The chart renders inside an Android `WebView`. The symbol name, O/H/L/C strip, and toolbar
+text inherit the WebView document's `body` font. The bundled `chart.html` sets a
+system-font stack (`'Inter', system-ui, -apple-system, …`), so these render in **Roboto** —
+no setup required.
 
-To change the **defaults** (`0` · `0.236` · `0.382` · `0.5` · `0.618` · `0.786` · `1`), use the raw-JSON form — `ChartThemeOverride` has no typed `drawing` field yet:
-
-```kotlin
-chart.setThemeOverrides("""
-{
-  "dark": {
-    "drawing": {
-      "fibRetracement": {
-        "levels": {
-          "0.786": { "visible": false, "color": "#e8b84b" },
-          "0.886": { "visible": true,  "color": "#e8b84b" }
-        }
-      }
-    }
-  }
-}
-""")
-```
-
-Ratios are map keys, so write them in canonical number form (`"0.5"`, not `"0.50"`).
+> Fixed in the ActCharts chart bundle: earlier bundles set no `body` font, so the symbol
+> name and OHLC strip fell back to the WebView's default **serif**. Updating to a build with
+> the current `chart.html` resolves it — there are no Kotlin API changes.
 
 ### Mobile icon sizing
 

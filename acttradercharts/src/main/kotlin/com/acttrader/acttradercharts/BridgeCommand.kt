@@ -61,6 +61,12 @@ sealed class BridgeCommand {
         val showUI: Boolean? = null,
         val showDrawingTools: Boolean? = null,
         val showBidAskLines: Boolean? = null,
+        /** Show the Ask price line independently. `null` falls back to the
+         *  legacy [showBidAskLines] behavior. */
+        val showAskLine: Boolean? = null,
+        /** Show the Bid price line independently. `null` falls back to the
+         *  legacy [showBidAskLines] behavior. */
+        val showBidLine: Boolean? = null,
         val showActLogo: Boolean? = null,
         val showCandleCountdown: Boolean? = null,
         val candleCountdownTimeframes: List<String>? = null,
@@ -88,7 +94,14 @@ sealed class BridgeCommand {
         /** Maximum launch velocity (px/ms) for momentum. Default: `6.0`. */
         val momentumMaxVelocity: Double? = null,
         val targetCandleWidth: Double? = null,
+        /** Which price drives live candle close/high/low: `"bid"` (default), `"ask"`,
+         *  or `"ltp"` — build candles from the last traded price (exchange/dealing
+         *  feeds); ticks without a valid LTP fall back to the bid. */
         val tickClosePriceSource: String? = null,
+        /** Show the LTP marker (dashed price line + axis tag). `null` (default):
+         *  shown only in `"ltp"` mode. `true`: always shown when the feed supplies
+         *  an LTP. `false`: hidden even in `"ltp"` mode. */
+        val showLtpPrice: Boolean? = null,
         val tradesThresholdForHorizontalLine: Int? = null,
         val tradeDisplayFilter: String? = null,
         val positionRenderStyle: String? = null,
@@ -144,13 +157,21 @@ sealed class BridgeCommand {
         val durationTimeframeMap: Map<String, String>? = null,
         /** When true, fires a `symbolClick` bridge event on symbol tap instead of opening the picker modal. */
         val onSymbolClick: Boolean = false,
+        /**
+         * When true, the `"mobile"` header renders an "Ask AI" (✦) button that fires
+         * a [BridgeEvent.AskAiClick] event on tap. No effect in other header layouts.
+         * Default: `false` (button hidden).
+         */
+        val onAskAiClick: Boolean = false,
         /** IANA timezone string for time-axis and crosshair labels. Default: `"UTC"`. */
         val timezone: String? = null,
         /**
          * Top-bar variant. `"simple"` (default) shows the classic TopBar; `"advanced"`
          * uses the compact pill-style AdvancedToolbar; `"compact"` uses the slim
          * per-pane CompactToolbar — recommended only when this chart is one cell
-         * of a host-rendered multi-pane grid.
+         * of a host-rendered multi-pane grid; `"mobile"` renders the compact mobile
+         * header (Tools button · timeframe pills · optional Ask AI button) — gate it
+         * yourself, e.g. `headerLayout = if (isMobile) "mobile" else null`.
          */
         val headerLayout: String? = null,
         /**
@@ -204,6 +225,8 @@ sealed class BridgeCommand {
                 showUI?.let { put("showUI", it) }
                 showDrawingTools?.let { put("showDrawingTools", it) }
                 showBidAskLines?.let { put("showBidAskLines", it) }
+                showAskLine?.let { put("showAskLine", it) }
+                showBidLine?.let { put("showBidLine", it) }
                 showActLogo?.let { put("showActLogo", it) }
                 showCandleCountdown?.let { put("showCandleCountdown", it) }
                 candleCountdownTimeframes?.let { put("candleCountdownTimeframes", JSONArray(it)) }
@@ -218,6 +241,7 @@ sealed class BridgeCommand {
                 momentumMaxVelocity?.let { put("momentumMaxVelocity", it) }
                 targetCandleWidth?.let { put("targetCandleWidth", it) }
                 tickClosePriceSource?.let { put("tickClosePriceSource", it) }
+                showLtpPrice?.let { put("showLtpPrice", it) }
                 tradesThresholdForHorizontalLine?.let { put("tradesThresholdForHorizontalLine", it) }
                 tradeDisplayFilter?.let { put("tradeDisplayFilter", it) }
                 positionRenderStyle?.let { put("positionRenderStyle", it) }
@@ -241,6 +265,7 @@ sealed class BridgeCommand {
                 labelsJson?.let { putJson("labels", it) }
                 uiConfigJson?.let { putJson("uiConfig", it) }
                 if (onSymbolClick) put("onSymbolClick", true)
+                if (onAskAiClick) put("onAskAiClick", true)
                 timezone?.let { put("timezone", it) }
                 headerLayout?.let { put("headerLayout", it) }
                 enableMultipleLayouts?.let { put("enableMultipleLayouts", it) }
@@ -278,11 +303,15 @@ sealed class BridgeCommand {
         }.toString()
     }
 
-    /** Pushes a live tick (bid/ask/timestamp) for streaming updates. */
+    /** Pushes a live tick (bid/ask/timestamp) for streaming updates.
+     *  [ltp]/[ltpv] (last traded price/volume) are optional — sent by
+     *  exchange/dealing feeds and consumed when `tickClosePriceSource = "ltp"`. */
     data class PushTick(
         val bid: Double,
         val ask: Double,
         val timestamp: Long,
+        val ltp: Double? = null,
+        val ltpv: Double? = null,
     ) : BridgeCommand() {
         override fun toJson(): String = JSONObject().apply {
             put("type", "pushTick")
@@ -290,7 +319,18 @@ sealed class BridgeCommand {
                 put("B", bid)
                 put("A", ask)
                 put("T", timestamp)
+                ltp?.let { put("LTP", it) }
+                ltpv?.let { put("LTPV", it) }
             })
+        }.toString()
+    }
+
+    /** Shows/hides the LTP price marker at runtime. Pass `null` to restore the
+     *  default (marker follows `tickClosePriceSource = "ltp"`). */
+    data class SetShowLtpPrice(val show: Boolean?) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setShowLtpPrice")
+            put("payload", JSONObject().apply { show?.let { put("show", it) } })
         }.toString()
     }
 
