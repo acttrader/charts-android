@@ -84,6 +84,15 @@ afterEvaluate {
         }
 
         repositories {
+            // Staging dir for the public GitHub Pages Maven repo. Publishing to a
+            // file:// repo (rather than mavenLocal) produces proper
+            // maven-metadata.xml, so dynamic versions resolve for consumers.
+            // publish.yml copies this into the gh-pages branch.
+            maven {
+                name = "pages"
+                url = uri(layout.buildDirectory.dir("pages-repo"))
+            }
+
             val ghActor = System.getenv("GITHUB_ACTOR")
             val ghToken = System.getenv("GITHUB_TOKEN")
             if (!ghToken.isNullOrBlank()) {

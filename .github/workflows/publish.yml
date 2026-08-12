@@ -12,7 +12,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write      # pushes the Maven layout to the gh-pages branch
       packages: write
 
     steps:
@@ -38,8 +38,52 @@ jobs:
             --output acttradercharts/src/main/assets/chart.html \
             --clobber
 
+      # Publishes to every configured repository: GitHub Packages (token-gated)
+      # and the local `pages-repo` staging dir copied to gh-pages below.
       - name: Publish library
         run: ./gradlew :acttradercharts:publish
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # GitHub Packages Maven requires a token on every read, even for public
+      # packages, so consumers would each need a PAT. Mirroring the same
+      # artifacts to GitHub Pages gives an anonymous, credential-free repo at
+      # https://<owner>.github.io/<repo>/maven for the identical coordinates.
+      - name: Mirror to the public Pages Maven repo
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          SRC=acttradercharts/build/pages-repo
+          if [ ! -d "$SRC" ]; then
+            echo "::error::$SRC is missing — the 'pages' publication did not run"
+            exit 1
+          fi
+
+          git config --global user.name  "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          REMOTE="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
+          # Reuse gh-pages if it exists; create it as an orphan on first publish
+          # so the branch carries only the Maven tree, not the source history.
+          if ! git clone --depth 1 --branch gh-pages "$REMOTE" pages 2>/dev/null; then
+            git clone --depth 1 "$REMOTE" pages
+            cd pages
+            git checkout --orphan gh-pages
+            git rm -rfq .
+            cd ..
+          fi
+
+          mkdir -p pages/maven
+          cp -r "$SRC"/. pages/maven/
+          # Pages skips paths beginning with `_` unless Jekyll is disabled.
+          touch pages/.nojekyll
+
+          cd pages
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing new to publish."
+            exit 0
+          fi
+          git commit -m "publish ${GITHUB_REF_NAME}"
+          git push origin gh-pages
