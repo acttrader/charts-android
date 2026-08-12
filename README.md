@@ -9,14 +9,15 @@ Android Kotlin library that renders [`ActCharts`](https://github.com/acttrader/A
 
 ## Installation
 
-Add GitHub Packages to your project's `settings.gradle.kts`:
+Add the repository to your project's `settings.gradle.kts`. **No credentials are
+needed** — releases are mirrored to a public Maven repo on GitHub Pages:
 
 ```kotlin
 dependencyResolutionManagement {
     repositories {
-        maven {
-            url = uri("https://maven.pkg.github.com/acttrader/charts-android")
-        }
+        google()
+        mavenCentral()
+        maven { url = uri("https://acttrader.github.io/charts-android/maven") }
     }
 }
 ```
@@ -28,6 +29,30 @@ dependencies {
     implementation("com.acttrader:acttrader-charts-android:0.1.0")
 }
 ```
+
+<details>
+<summary>Alternative: GitHub Packages (requires a token)</summary>
+
+The same artifacts are also published to GitHub Packages. That registry
+authenticates **every** read — including public packages — so each developer and
+CI job needs a personal access token with `read:packages`. Prefer the Pages repo
+above unless you specifically need this one.
+
+```kotlin
+maven {
+    url = uri("https://maven.pkg.github.com/acttrader/charts-android")
+    credentials {
+        username = providers.gradleProperty("gpr.user").orNull
+        password = providers.gradleProperty("gpr.key").orNull
+    }
+}
+```
+
+with `gpr.user` / `gpr.key` in `~/.gradle/gradle.properties` (never committed).
+Without the credentials block Gradle reports the artifact as *not found*, which
+looks identical to it not having been published.
+
+</details>
 
 ### Beta releases
 
