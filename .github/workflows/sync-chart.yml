@@ -14,17 +14,31 @@ jobs:
     permissions:
       contents: write
     steps:
+      # Check out with a PAT, NOT the default GITHUB_TOKEN. GitHub does not start
+      # a workflow run for events pushed with GITHUB_TOKEN (its recursion guard),
+      # so a tag pushed that way never reached publish.yml's `on: push: tags` —
+      # which is why no version was ever published to GitHub Packages.
       - uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.CHARTS_REPO_PAT }}
 
-      - name: Bump VERSION_NAME in gradle.properties
+      - name: Bump version in gradle.properties + README
         run: |
-          sed -i "s/^VERSION_NAME=.*/VERSION_NAME=${{ github.event.client_payload.version }}/" gradle.properties
+          V="${{ github.event.client_payload.version }}"
+          sed -i "s/^VERSION_NAME=.*/VERSION_NAME=$V/" gradle.properties
+          # Prereleases update only the beta example; stable updates only the
+          # stable example, so the two never overwrite each other.
+          if [[ "$V" == *-* ]]; then
+            sed -i -E "/^implementation\(/ s|(com\.acttrader:acttrader-charts-android:)[^\"]*|\1$V|" README.md
+          else
+            sed -i -E "/^    implementation\(/ s|(com\.acttrader:acttrader-charts-android:)[^\"]*|\1$V|" README.md
+          fi
 
       - name: Commit version bump
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add gradle.properties
+          git add gradle.properties README.md
           git diff --cached --quiet && echo "Nothing to commit, skipping." && exit 0
           git commit -m "chore: bump version to v${{ github.event.client_payload.version }}"
 
