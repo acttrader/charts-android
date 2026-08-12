@@ -38,10 +38,17 @@ jobs:
             --output acttradercharts/src/main/assets/chart.html \
             --clobber
 
-      # Publishes to every configured repository: GitHub Packages (token-gated)
-      # and the local `pages-repo` staging dir copied to gh-pages below.
-      - name: Publish library
-        run: ./gradlew :acttradercharts:publish
+      # Staged separately, not via the aggregate `publish` task: GitHub Packages
+      # answers 409 Conflict when a version already exists, and that used to fail
+      # the whole build before the public mirror below ever ran. The public repo
+      # is the one consumers use, so it publishes first and must succeed.
+      - name: Publish library (public Pages repo)
+        run: ./gradlew :acttradercharts:publishReleasePublicationToPagesRepository
+
+      - name: Publish library (GitHub Packages)
+        # 409 on re-publishing an existing version is expected and harmless.
+        continue-on-error: true
+        run: ./gradlew :acttradercharts:publishReleasePublicationToGitHubPackagesRepository
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
