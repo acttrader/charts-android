@@ -59,7 +59,7 @@ looks identical to it not having been published.
 Pre-release builds are published to the same GitHub Packages repository under prerelease versions (`X.Y.Z-beta.N`). They coexist with stable releases — pin the exact beta version to opt in:
 
 ```kotlin
-implementation("com.acttrader:acttrader-charts-android:1.3.0-beta.4")
+implementation("com.acttrader:acttrader-charts-android:1.3.0-beta.5")
 ```
 
 If you use Gradle dynamic versions (`1.+`, `latest.release`), prerelease versions **may** be picked up — pin exact versions in production to avoid surprises.
