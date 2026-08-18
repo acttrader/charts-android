@@ -161,7 +161,7 @@ parentLayout.addView(chart)
 | `setTheme("dark" \| "light")` | Switch theme |
 | `setTimeframe(timeframe)` | `"1m"` `"5m"` `"15m"` `"30m"` `"1h"` `"4h"` `"1D"` `"1W"` `"1M"` `"1Y"` |
 | `setDuration(duration, timeframe?)` | Select a duration (`"1D"` `"5D"` `"1M"` `"3M"` `"6M"` `"1Y"` `"5Y"` `"All"`) and refetch. The timeframe is paired from `durationTimeframeMap` unless given. The x-axis rescales from the new bars — no reinitialisation needed |
-| `setBracketLabelMode(mode, currencySymbol?)` | `"price"` (default) or `"amount"` — whether SL/TP pills show the bracket price or the money it is worth |
+| `setBracketLabelMode(mode, currencySymbol?)` | `"price"` (default), `"amount"`, or `"priceAndAmount"` — whether SL/TP pills show the bracket price, the money it is worth, or the price with the currency symbol plus the P/L while dragging |
 | `setSeries(type)` | Change chart type (`"candlestick"`, `"hollow_candle"`, `"line"`, `"area"`, `"ohlc"`) |
 | `setSymbol(symbol)` | Update displayed symbol name |
 | `addIndicator(name, params?)` | Add study (e.g. `"SMA"`, `"EMA"`, `"RSI"`, `"BB"`, `"MACD"`). Parameterized studies add a **new instance** per call (multiple EMAs etc.); listen to `onIndicatorAdded` for its `instanceId` |
