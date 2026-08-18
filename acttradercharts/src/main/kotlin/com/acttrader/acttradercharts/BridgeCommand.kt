@@ -133,6 +133,10 @@ sealed class BridgeCommand {
          * Clamped to `[1.0, 3.0]`. Default: `1.0`.
          */
         val tradeLevelButtonScale: Double? = null,
+        /** `"price"` (default) or `"amount"` — what the SL/TP bracket pills show. */
+        val bracketLabelMode: String? = null,
+        /** Currency symbol for SL/TP amounts when `bracketLabelMode = "amount"`. Default `"$"`. */
+        val currencySymbol: String? = null,
         val levelClusteringEnabled: Boolean? = null,
         val clusterThresholdDistance: Int? = null,
         /** Enable TFC toggle button in the top bar. When `false`, TFC is completely disabled. Default: `true`. */
@@ -250,6 +254,8 @@ sealed class BridgeCommand {
                 showTradeLevelsAlways?.let { put("showTradeLevelsAlways", it) }
                 showPriceAxisCountdown?.let { put("showPriceAxisCountdown", it) }
                 tradeLevelButtonScale?.let { put("tradeLevelButtonScale", it) }
+                bracketLabelMode?.let { put("bracketLabelMode", it) }
+                currencySymbol?.let { put("currencySymbol", it) }
                 levelClusteringEnabled?.let { put("levelClusteringEnabled", it) }
                 clusterThresholdDistance?.let { put("clusterThresholdDistance", it) }
                 tfcEnabled?.let { put("tfcEnabled", it) }
@@ -382,6 +388,32 @@ sealed class BridgeCommand {
     }
 
     /** Changes the active timeframe (e.g. `"1m"`, `"1h"`, `"1D"`). */
+    /**
+     * Selects a duration and refetches. The timeframe is paired from
+     * `durationTimeframeMap` unless [timeframe] is given, and the x-axis
+     * rescales from the new bars — no reinitialisation needed.
+     */
+    data class SetDuration(val duration: String, val timeframe: String? = null) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setDuration")
+            put("payload", JSONObject().apply {
+                put("duration", duration)
+                timeframe?.let { put("timeframe", it) }
+            })
+        }.toString()
+    }
+
+    /** Switches SL/TP pills between the bracket price and the money it is worth. */
+    data class SetBracketLabelMode(val mode: String, val currencySymbol: String? = null) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setBracketLabelMode")
+            put("payload", JSONObject().apply {
+                put("mode", mode)
+                currencySymbol?.let { put("currencySymbol", it) }
+            })
+        }.toString()
+    }
+
     data class SetTimeframe(val timeframe: String) : BridgeCommand() {
         override fun toJson(): String = JSONObject().apply {
             put("type", "setTimeframe")

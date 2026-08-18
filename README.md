@@ -64,6 +64,43 @@ implementation("com.acttrader:acttrader-charts-android:1.3.0-beta.6")
 
 If you use Gradle dynamic versions (`1.+`, `latest.release`), prerelease versions **may** be picked up — pin exact versions in production to avoid surprises.
 
+## SL/TP amounts instead of prices
+
+By default the SL/TP pills read `SL 4159.00`. Set `bracketLabelMode = "amount"`
+and they read `SL -$290.80` — what the position gains or loses if that bracket
+is hit, with the currency symbol in front.
+
+The chart has no access to contract specs, so each level supplies what the maths
+needs. These go in the level maps you already pass to `setLevels`:
+
+| key | meaning |
+|---|---|
+| `contractSize` | Units per lot — `100` for XAUUSD, `100000` for most FX pairs |
+| `valuePerPoint` | Account-currency value of one price unit, folding in any quote → account conversion. Default `1` |
+| `currencySymbol` | Per-level override of the chart-wide `currencySymbol` |
+
+```kotlin
+chart.init(theme = "dark", bracketLabelMode = "amount", currencySymbol = "$")
+
+chart.setLevels(
+    levels = listOf(
+        mapOf(
+            "label" to "POS-1", "price" to 4173.54, "side" to "buy", "lots" to 0.20,
+            "stopLossPrice" to 4159.00, "takeProfitPrice" to 4183.00,
+            "contractSize" to 100, "valuePerPoint" to 1,
+        )
+    ),
+    labelKey = "label", priceKey = "price", type = "position",
+)
+// pills render: SL -$290.80   TP +$189.20
+```
+
+`amount = (bracket − entry) × direction × lots × contractSize × valuePerPoint`
+
+A level missing `lots` or `contractSize` keeps showing its price, so a partial
+rollout degrades level by level rather than rendering `NaN`. Switch at runtime
+with `setBracketLabelMode("amount")`.
+
 ## OHLCVBar
 
 ```kotlin
@@ -123,6 +160,8 @@ parentLayout.addView(chart)
 | `setShowLtpPrice(show?)` | Show/hide the LTP price marker at runtime; pass `null` to restore the default (marker follows `tickClosePriceSource = "ltp"`) |
 | `setTheme("dark" \| "light")` | Switch theme |
 | `setTimeframe(timeframe)` | `"1m"` `"5m"` `"15m"` `"30m"` `"1h"` `"4h"` `"1D"` `"1W"` `"1M"` `"1Y"` |
+| `setDuration(duration, timeframe?)` | Select a duration (`"1D"` `"5D"` `"1M"` `"3M"` `"6M"` `"1Y"` `"5Y"` `"All"`) and refetch. The timeframe is paired from `durationTimeframeMap` unless given. The x-axis rescales from the new bars — no reinitialisation needed |
+| `setBracketLabelMode(mode, currencySymbol?)` | `"price"` (default), `"amount"`, or `"priceAndAmount"` — whether SL/TP pills show the bracket price, the money it is worth, or the price with the currency symbol plus the P/L while dragging |
 | `setSeries(type)` | Change chart type (`"candlestick"`, `"hollow_candle"`, `"line"`, `"area"`, `"ohlc"`) |
 | `setSymbol(symbol)` | Update displayed symbol name |
 | `addIndicator(name, params?)` | Add study (e.g. `"SMA"`, `"EMA"`, `"RSI"`, `"BB"`, `"MACD"`). Parameterized studies add a **new instance** per call (multiple EMAs etc.); listen to `onIndicatorAdded` for its `instanceId` |

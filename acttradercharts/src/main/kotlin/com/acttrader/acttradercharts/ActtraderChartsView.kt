@@ -431,6 +431,8 @@ class ActtraderChartsView @JvmOverloads constructor(
          * Clamped to `[1.0, 3.0]`. Default: `1.0`.
          */
         tradeLevelButtonScale: Double? = null,
+        bracketLabelMode: String? = null,
+        currencySymbol: String? = null,
         /** Enable trade-level fan-out clustering. Overlapping levels are grouped into expandable badges. Default: `true`. */
         levelClusteringEnabled: Boolean? = null,
         /** Pixel proximity threshold for level clustering. Only effective when [levelClusteringEnabled] is `true`. Default: `20`. */
@@ -552,6 +554,8 @@ class ActtraderChartsView @JvmOverloads constructor(
         showTradeLevelsAlways = showTradeLevelsAlways,
         showPriceAxisCountdown = showPriceAxisCountdown,
         tradeLevelButtonScale = tradeLevelButtonScale,
+        bracketLabelMode = bracketLabelMode,
+        currencySymbol = currencySymbol,
         levelClusteringEnabled = levelClusteringEnabled, clusterThresholdDistance = clusterThresholdDistance,
         tfcEnabled = tfcEnabled,
         showSettings = showSettings,
@@ -615,6 +619,24 @@ class ActtraderChartsView @JvmOverloads constructor(
 
     /** Changes the active timeframe (e.g. `"1m"`, `"1h"`, `"1D"`). */
     fun setTimeframe(timeframe: String) = sendCommand(BridgeCommand.SetTimeframe(timeframe))
+
+    /**
+     * Selects a chart duration (`"1D"`, `"5D"`, `"1M"`, `"3M"`, `"6M"`, `"1Y"`,
+     * `"5Y"`, `"All"`) and refetches. The timeframe is paired automatically
+     * unless [timeframe] is supplied. The x-axis rescales from the new bars, so
+     * the chart never needs reinitialising when the interval changes.
+     */
+    fun setDuration(duration: String, timeframe: String? = null) =
+        sendCommand(BridgeCommand.SetDuration(duration, timeframe))
+
+    /**
+     * Switches the SL/TP bracket pills between the bracket price (`"price"`,
+     * the default) and the money that bracket is worth (`"amount"`, e.g.
+     * `SL -$290.80`). Amount mode needs each level to carry `lots` plus
+     * `contractSize` / `valuePerPoint`; levels without them keep showing prices.
+     */
+    fun setBracketLabelMode(mode: String, currencySymbol: String? = null) =
+        sendCommand(BridgeCommand.SetBracketLabelMode(mode, currencySymbol))
 
     /**
      * Pushes a live tick for streaming updates.
