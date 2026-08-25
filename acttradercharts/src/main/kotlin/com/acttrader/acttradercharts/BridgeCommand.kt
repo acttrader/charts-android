@@ -589,6 +589,21 @@ sealed class BridgeCommand {
     }
 
     /** Updates the entry price of an existing level. */
+    /**
+     * Mirrors a quantity change made in the host's own modify panel onto the
+     * level's pill. Staged like a chart-side qty edit, so it survives `setLevels`
+     * refreshes and is reverted by `cancelCurrentEdit`.
+     */
+    data class UpdateLevelQty(val label: String, val qty: Double) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "updateLevelQty")
+            put("payload", JSONObject().apply {
+                put("label", label)
+                put("qty", qty)
+            })
+        }.toString()
+    }
+
     data class UpdateLevelMainPrice(val label: String, val price: Double) : BridgeCommand() {
         override fun toJson(): String = JSONObject().apply {
             put("type", "updateLevelMainPrice")
