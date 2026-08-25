@@ -777,6 +777,17 @@ class ActtraderChartsView @JvmOverloads constructor(
         sendCommand(BridgeCommand.UpdateLevelMainPrice(label, price))
 
     /**
+     * Update the quantity shown on an existing level's pill — the counterpart of
+     * [updateLevelMainPrice] for lots. Call it when your modify panel changes the
+     * size, so the chart stops showing the broker's old quantity while the modify
+     * is in flight. Staged like a chart-side qty edit: it survives [setLevels]
+     * refreshes, rides along in `onTradeLevelEdit`, and is reverted by
+     * [cancelCurrentEdit].
+     */
+    fun updateLevelQty(label: String, qty: Double) =
+        sendCommand(BridgeCommand.UpdateLevelQty(label, qty))
+
+    /**
      * Updates or removes a SL/TP bracket on an existing level.
      * @param bracketType `"sl"` or `"tp"`.
      * @param price Pass `null` to remove the bracket.
