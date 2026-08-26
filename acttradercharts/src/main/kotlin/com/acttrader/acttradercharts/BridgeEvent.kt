@@ -42,6 +42,10 @@ sealed class BridgeEvent {
     /** Active chart series type changed. */
     data class SeriesChange(val series: String) : BridgeEvent()
 
+    /** User picked a price source (`"bid"`, `"ask"` or `"ltp"`) from the header
+     *  dropdown (`priceSourceSelector`) — persist it host-side if desired. */
+    data class PriceSourceChange(val source: String) : BridgeEvent()
+
     /** Active timeframe changed. */
     data class TimeframeChange(val timeframe: String) : BridgeEvent()
 
@@ -374,6 +378,8 @@ object BridgeEventParser {
             }
 
             "seriesChange" -> BridgeEvent.SeriesChange(p.getString("series"))
+
+            "priceSourceChange" -> BridgeEvent.PriceSourceChange(p.getString("source"))
 
             "timeframeChange" -> BridgeEvent.TimeframeChange(p.getString("timeframe"))
 
