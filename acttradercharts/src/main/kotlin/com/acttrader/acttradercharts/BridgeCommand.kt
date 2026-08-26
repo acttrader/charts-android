@@ -102,6 +102,11 @@ sealed class BridgeCommand {
          *  shown only in `"ltp"` mode. `true`: always shown when the feed supplies
          *  an LTP. `false`: hidden even in `"ltp"` mode. */
         val showLtpPrice: Boolean? = null,
+        /** Show a price-source dropdown in the chart header listing these sources,
+         *  e.g. `listOf("ltp", "bid")` (dealing feeds). A user pick switches the
+         *  live candle source and emits [BridgeEvent.PriceSourceChange]. Hidden
+         *  when `null` or empty. */
+        val priceSourceSelector: List<String>? = null,
         val tradesThresholdForHorizontalLine: Int? = null,
         val tradeDisplayFilter: String? = null,
         val positionRenderStyle: String? = null,
@@ -242,6 +247,7 @@ sealed class BridgeCommand {
                 targetCandleWidth?.let { put("targetCandleWidth", it) }
                 tickClosePriceSource?.let { put("tickClosePriceSource", it) }
                 showLtpPrice?.let { put("showLtpPrice", it) }
+                priceSourceSelector?.let { put("priceSourceSelector", JSONArray(it)) }
                 tradesThresholdForHorizontalLine?.let { put("tradesThresholdForHorizontalLine", it) }
                 tradeDisplayFilter?.let { put("tradeDisplayFilter", it) }
                 positionRenderStyle?.let { put("positionRenderStyle", it) }
@@ -331,6 +337,16 @@ sealed class BridgeCommand {
         override fun toJson(): String = JSONObject().apply {
             put("type", "setShowLtpPrice")
             put("payload", JSONObject().apply { show?.let { put("show", it) } })
+        }.toString()
+    }
+
+    /** Switches which price drives live candle close/high/low at runtime
+     *  (`"bid"`, `"ask"` or `"ltp"`). Also syncs the header price-source
+     *  dropdown when `priceSourceSelector` is enabled. */
+    data class SetTickClosePriceSource(val source: String) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setTickClosePriceSource")
+            put("payload", JSONObject().apply { put("source", source) })
         }.toString()
     }
 

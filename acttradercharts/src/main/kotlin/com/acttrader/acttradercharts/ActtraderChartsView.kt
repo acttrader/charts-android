@@ -116,6 +116,10 @@ class ActtraderChartsView @JvmOverloads constructor(
     /** Called when the active series type changes. */
     var onSeriesChange: ((BridgeEvent.SeriesChange) -> Unit)? = null
 
+    /** User picked a price source (BID / ASK / LTP) from the header dropdown
+     *  (`priceSourceSelector`) — persist it host-side if desired. */
+    var onPriceSourceChange: ((BridgeEvent.PriceSourceChange) -> Unit)? = null
+
     /** Called when the active timeframe changes. */
     var onTimeframeChange: ((BridgeEvent.TimeframeChange) -> Unit)? = null
 
@@ -313,6 +317,7 @@ class ActtraderChartsView @JvmOverloads constructor(
             is BridgeEvent.BarClick -> onBarClick?.invoke(event)
             is BridgeEvent.ViewportChange -> onViewportChange?.invoke(event)
             is BridgeEvent.SeriesChange -> onSeriesChange?.invoke(event)
+            is BridgeEvent.PriceSourceChange -> onPriceSourceChange?.invoke(event)
             is BridgeEvent.TimeframeChange -> onTimeframeChange?.invoke(event)
             is BridgeEvent.DurationChange -> onDurationChange?.invoke(event)
             is BridgeEvent.StateChange -> onStateChange?.invoke(event)
@@ -409,6 +414,11 @@ class ActtraderChartsView @JvmOverloads constructor(
          *  shown only in `"ltp"` mode. `true`: always shown when the feed supplies
          *  an LTP. `false`: hidden even in `"ltp"` mode. */
         showLtpPrice: Boolean? = null,
+        /** Show a price-source dropdown in the chart header listing these sources,
+         *  e.g. `listOf("ltp", "bid")` (dealing feeds). A user pick switches the
+         *  live candle source and emits [BridgeEvent.PriceSourceChange]. Hidden
+         *  when `null` or empty. */
+        priceSourceSelector: List<String>? = null,
         tradesThresholdForHorizontalLine: Int? = null,
         tradeDisplayFilter: String? = null,
         positionRenderStyle: String? = null,
@@ -544,7 +554,7 @@ class ActtraderChartsView @JvmOverloads constructor(
         momentumScrollEnabled = momentumScrollEnabled, momentumDecay = momentumDecay,
         momentumThreshold = momentumThreshold, momentumMaxVelocity = momentumMaxVelocity,
         targetCandleWidth = targetCandleWidth, tickClosePriceSource = tickClosePriceSource,
-        showLtpPrice = showLtpPrice,
+        showLtpPrice = showLtpPrice, priceSourceSelector = priceSourceSelector,
         tradesThresholdForHorizontalLine = tradesThresholdForHorizontalLine,
         tradeDisplayFilter = tradeDisplayFilter, positionRenderStyle = positionRenderStyle,
         hideLevelConfirmCancel = hideLevelConfirmCancel,
@@ -635,6 +645,16 @@ class ActtraderChartsView @JvmOverloads constructor(
     @JvmOverloads
     fun setShowLtpPrice(show: Boolean? = null) =
         sendCommand(BridgeCommand.SetShowLtpPrice(show))
+
+    /**
+     * Switches which price drives live candle close/high/low at runtime
+     * (`"bid"`, `"ask"` or `"ltp"`). Also syncs the header price-source
+     * dropdown when `priceSourceSelector` is enabled. Programmatic calls do
+     * not emit [BridgeEvent.PriceSourceChange] — that event fires only for
+     * user picks from the dropdown.
+     */
+    fun setTickClosePriceSource(source: String) =
+        sendCommand(BridgeCommand.SetTickClosePriceSource(source))
 
     /**
      * Adds a study by short name (e.g. `"SMA"`, `"EMA"`, `"RSI"`, `"BB"`).
