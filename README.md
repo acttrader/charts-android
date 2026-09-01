@@ -165,6 +165,8 @@ parentLayout.addView(chart)
 | `setBracketLabelMode(mode, currencySymbol?)` | `"price"` (default), `"amount"`, or `"priceAndAmount"` — whether SL/TP pills show the bracket price, the money it is worth, or the price with the currency symbol plus the P/L while dragging |
 | `setSeries(type)` | Change chart type (`"candlestick"`, `"hollow_candle"`, `"line"`, `"area"`, `"ohlc"`) |
 | `setSymbol(symbol)` | Update displayed symbol name |
+| `setInstrument(spec?)` | Contract specs used by the measurement tools — see [Instrument specs](#instrument-specs). Pair it with `setSymbol`; `null` clears them |
+| `setAccount(spec?)` | Account equity and per-trade risk used to size the position tools — see [Position tools](#position-tools). Push it whenever equity moves |
 | `addIndicator(name, params?)` | Add study (e.g. `"SMA"`, `"EMA"`, `"RSI"`, `"BB"`, `"MACD"`). Parameterized studies add a **new instance** per call (multiple EMAs etc.); listen to `onIndicatorAdded` for its `instanceId` |
 | `removeIndicator(name)` | Remove a study — pass an `instanceId` (e.g. `"EMA#3"`) for one instance, or a short name (e.g. `"EMA"`) for all instances of that study |
 | `setDrawingTool(tool?)` | Activate drawing tool (e.g. `"trend_line"`, `"horizontal_line"`), `null` to deactivate |
@@ -240,6 +242,9 @@ chart.loadData(bars)
 | `duration` | `String?` | `null` | Initial duration button (e.g. `"1D"`, `"1M"`, `"1Y"`, `"All"`) |
 | `showVolume` | `Boolean?` | `null` | Show volume bars |
 | `showUI` | `Boolean?` | `null` | Show top / bottom bars. When `false`, the loading overlay is also suppressed |
+| `instrument` | `InstrumentSpec?` | `null` | Contract specs for `symbol` — see [Instrument specs](#instrument-specs) |
+| `account` | `AccountSpec?` | `null` | Account equity and per-trade risk — see [Position tools](#position-tools) |
+| `enableForecasting` | `Boolean?` | `null` (`false`) | The reworked drawing tools, as one switch — see [Feature flags](#feature-flags) |
 | `showDrawingTools` | `Boolean?` | `null` | Show drawing toolbar and pencil button |
 | `showBidAskLines` | `Boolean?` | `null` | **Deprecated** — show bid and ask as dashed lines during a live stream. Prefer `showAskLine` / `showBidLine` |
 | `showAskLine` | `Boolean?` | `null` | Show the Ask price line independently. `null`: legacy `showBidAskLines` behavior |
@@ -609,3 +614,132 @@ To remove a bracket: use `removeBracket("sl")` (draft) or `removeBracket("sl", o
 ## License
 
 MIT
+
+---
+
+## Instrument specs
+
+The chart reads prices, never contract specs — so a tool that reports a distance
+in **pips**, or converts one to money, has to be told how.
+
+The **ruler** uses this. With specs it reads:
+
+```
+0.00455 (0.80%) 45.5
+43 bars, 9d 4h
+Vol 102.27K
+```
+
+Without them a pip figure is still shown, but inferred from how many decimals
+the feed quotes — the usual FX convention, which is wrong for metals, indices
+and crypto.
+
+```kotlin
+chart.init(
+    theme = "dark",
+    symbol = "EURUSD",
+    instrument = InstrumentSpec(
+        pipSize = 0.0001,        // 0.01 for JPY crosses
+        contractSize = 100_000.0, // units per lot
+    ),
+)
+
+// Specs belong to the instrument — swap them with the symbol.
+chart.setSymbol("USDJPY")
+chart.setInstrument(InstrumentSpec(pipSize = 0.01, contractSize = 100_000.0))
+```
+
+| Field | Default | Description |
+|---|---|---|
+| `pipSize` | inferred | Price distance counted as one pip |
+| `contractSize` | `1.0` | Units per lot (`100.0` for XAUUSD, `100000.0` for most FX pairs) |
+| `valuePerPoint` | `1.0` | Account-currency value of one price unit per contract unit |
+| `currencySymbol` | `"$"` | Prefixed to money figures |
+
+Every field is optional and the whole block can be omitted — tools fall back to
+price-only readouts, so an existing integration keeps working untouched.
+
+When `pipSize` is absent it is inferred from how many decimals the feed quotes:
+five-decimal (`1.08531`) and three-decimal (`151.234`) feeds carry fractional
+pips, so the pip is the second-to-last digit; two- and four-decimal feeds quote
+whole pips. **That convention is wrong for metals, indices and crypto** — pass
+`pipSize` explicitly if pips matter.
+
+> A stale pip size reports a wrong number rather than failing visibly, so always
+> call `setInstrument` alongside `setSymbol`.
+
+## Freehand drawing
+
+`brush` and `highlighter` draw freehand: press, drag, release. The pointer path
+is sampled continuously and the finished stroke is thinned to the points that
+carry its shape. (`polyline` and `path` remain tap-per-point.)
+
+## Position tools
+
+`"longPosition"` and `"shortPosition"` sketch a trade that hasn't been placed:
+a green profit zone from entry to target, a red risk zone from entry to stop,
+and live readouts.
+
+```
+Target: 0.00313 (0.549%) 31.3, Amount: 5622.13
+Open PnL: 0.00146, Qty: 11323
+Risk/reward ratio: 1.84
+Stop: 0.00170 (0.298%) 17.0, Amount: 2887.5
+```
+
+Two taps place it — entry, then target — and the stop lands at a 2:1
+reward:risk to be dragged. All three prices have handles.
+
+Quantity is sized so hitting the stop costs exactly `riskPercent` of the
+account:
+
+```kotlin
+chart.setAccount(AccountSpec(size = 10_000.0, riskPercent = 1.0))
+```
+
+| Field | Default | Description |
+|---|---|---|
+| `size` | — | Account equity in the account currency |
+| `riskPercent` | `1.0` | Percent of the account risked per trade |
+
+Omit it and the tools still draw — price, percent, pips and risk/reward all
+render; only quantity and money are left out. Money amounts and pips also need
+[Instrument specs](#instrument-specs).
+
+> **These are drawings, not orders.** Trade-From-Chart is what puts real broker
+> orders on the chart. Nothing on a position tool reaches the broker.
+>
+> A sketch drawn against a stale balance reports the wrong quantity rather than
+> failing visibly, so call `setAccount` whenever equity moves.
+
+## Feature flags
+
+The reworked drawing tools ship behind one init flag so each broker opts in.
+**It defaults to `false`** — an app that doesn't set it keeps exactly the toolbar
+it has today.
+
+```kotlin
+chart.init(
+    theme = "dark",
+    symbol = "EURUSD",
+    enableForecasting = true,
+)
+```
+
+`enableForecasting` turns on three things together:
+
+| | What it changes |
+|---|---|
+| **Position tools** | Adds **Long Position** / **Short Position** in a **Forecasting** group. Off, the group is not rendered at all |
+| **Freehand brush** | **Brush** and **Highlighter** draw freehand (press, drag, release). Off, they stay tap-per-point, ended by a double-tap |
+| **Detailed ruler** | **Ruler** reports percent, pips, duration and volume. Off, it reports bar count and raw price delta |
+
+One flag rather than three because they ship and roll back together. With it off
+the Forecasting group is absent from both the drawing toolbar and the mobile
+tools sheet.
+
+> Pass these ids to `setDrawingTool` exactly as written — `"longPosition"` /
+> `"shortPosition"`, camelCase. An unrecognised id silently draws a Trend Line.
+
+The position tools show quantity and money only with `account`; pips on both the
+position tools and the ruler come from `instrument`.

@@ -53,6 +53,15 @@ sealed class BridgeCommand {
     data class Init(
         val theme: String = "dark",
         val symbol: String? = null,
+        /** Contract specs for [symbol] — see [InstrumentSpec]. */
+        val instrument: InstrumentSpec? = null,
+        /** Account equity and per-trade risk — see [AccountSpec]. */
+        val account: AccountSpec? = null,
+        /** Enable the reworked drawing tools as one switch: Long/Short Position in a
+         *  new Forecasting group, freehand Brush & Highlighter, and the full Ruler
+         *  readout. Drawings only — nothing reaches the broker. Position
+         *  quantity/money need [account], pips need [InstrumentSpec]. Default: false. */
+        val enableForecasting: Boolean? = null,
         val series: String? = null,
         val timeframe: String? = null,
         val duration: String? = null,
@@ -224,6 +233,9 @@ sealed class BridgeCommand {
             put("payload", JSONObject().apply {
                 put("theme", theme)
                 symbol?.let { put("symbol", it) }
+                instrument?.let { put("instrument", it.toJson()) }
+                account?.let { put("account", it.toJson()) }
+                enableForecasting?.let { put("enableForecasting", it) }
                 series?.let { put("series", it) }
                 timeframe?.let { put("timeframe", it) }
                 duration?.let { put("duration", it) }
@@ -445,6 +457,38 @@ sealed class BridgeCommand {
             put("type", "setSymbol")
             put("payload", JSONObject().apply {
                 put("symbol", symbol)
+            })
+        }.toString()
+    }
+
+    /**
+     * Replaces the contract specs the measurement tools use to report pips and
+     * money. Pair it with [SetSymbol] — specs belong to the instrument, and a
+     * stale pip size reports a wrong number rather than failing visibly.
+     *
+     * Every field is optional; omitted ones fall back (pip size is inferred from
+     * the feed's decimal count, which follows the usual FX convention and is
+     * wrong for metals, indices and crypto). Pass `null` to clear the specs.
+     */
+    data class SetInstrument(val instrument: InstrumentSpec?) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setInstrument")
+            put("payload", JSONObject().apply {
+                if (instrument != null) put("instrument", instrument.toJson())
+            })
+        }.toString()
+    }
+
+    /**
+     * Updates the account figures the Long/Short position tools size against.
+     * Push it whenever equity moves — a sketch drawn against a stale balance
+     * quietly reports the wrong quantity.
+     */
+    data class SetAccount(val account: AccountSpec?) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setAccount")
+            put("payload", JSONObject().apply {
+                if (account != null) put("account", account.toJson())
             })
         }.toString()
     }

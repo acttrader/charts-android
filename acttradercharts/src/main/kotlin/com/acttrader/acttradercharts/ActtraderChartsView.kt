@@ -365,6 +365,23 @@ class ActtraderChartsView @JvmOverloads constructor(
     fun init(
         theme: String = "dark",
         symbol: String? = null,
+        /**
+         * Contract specs for [symbol]. Lets the ruler report pips and money
+         * instead of a bare price distance. Swap it with [setInstrument] when
+         * the symbol changes.
+         */
+        instrument: InstrumentSpec? = null,
+        /**
+         * Account equity and per-trade risk used to size the Long/Short
+         * position tools. Keep it current with [setAccount].
+         */
+        account: AccountSpec? = null,
+        /**
+         * Enable the reworked drawing tools as one switch: Long/Short Position in
+         * a new Forecasting group, freehand Brush & Highlighter, and the full
+         * Ruler readout. Default: false.
+         */
+        enableForecasting: Boolean? = null,
         series: String? = null,
         timeframe: String? = null,
         duration: String? = null,
@@ -543,7 +560,9 @@ class ActtraderChartsView @JvmOverloads constructor(
     ): Unit {
         applyNativeTheme(theme)
         val initCmd = BridgeCommand.Init(
-        theme = theme, symbol = symbol, series = series, timeframe = timeframe,
+        theme = theme, symbol = symbol, instrument = instrument, account = account,
+        enableForecasting = enableForecasting,
+        series = series, timeframe = timeframe,
         duration = duration, enableTrading = enableTrading,
         showVolume = showVolume, showUI = showUI, showDrawingTools = showDrawingTools,
         showBidAskLines = showBidAskLines, showAskLine = showAskLine,
@@ -709,6 +728,23 @@ class ActtraderChartsView @JvmOverloads constructor(
 
     /** Updates the displayed symbol name in the chart's top bar. */
     fun setSymbol(symbol: String) = sendCommand(BridgeCommand.SetSymbol(symbol))
+
+    /**
+     * Replaces the contract specs the measurement tools use to report pips and
+     * money. Pair it with [setSymbol]; pass `null` to clear them.
+     *
+     * @see InstrumentSpec
+     */
+    fun setInstrument(instrument: InstrumentSpec?) =
+        sendCommand(BridgeCommand.SetInstrument(instrument))
+
+    /**
+     * Updates the account equity and per-trade risk the Long/Short position
+     * tools size against. Push it whenever equity moves; `null` clears it.
+     *
+     * @see AccountSpec
+     */
+    fun setAccount(account: AccountSpec?) = sendCommand(BridgeCommand.SetAccount(account))
 
     /**
      * Requests the current chart state.
