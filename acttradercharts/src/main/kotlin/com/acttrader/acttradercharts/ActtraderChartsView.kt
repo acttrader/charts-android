@@ -184,6 +184,26 @@ class ActtraderChartsView @JvmOverloads constructor(
     var onTfcToggle: ((BridgeEvent.TfcToggle) -> Unit)? = null
 
     /**
+     * Called when the crosshair is switched on or off — via the header switch
+     * (`enableCrossHairHeader` in [init]) or [setCrosshairEnabled]. Persist `enabled` and
+     * seed it back through `crosshairEnabled` on the next [init].
+     */
+    var onCrosshairToggle: ((BridgeEvent.CrosshairToggle) -> Unit)? = null
+
+    /** Called when a horizontal (time-axis) badge drag starts (requires `orderLineTimeDrag`). */
+    var onOrderLineMoveStart: ((BridgeEvent.OrderLineMoveStart) -> Unit)? = null
+
+    /** Called on every move of a horizontal badge drag, before release. */
+    var onOrderLineMoving: ((BridgeEvent.OrderLineMoving) -> Unit)? = null
+
+    /**
+     * Called once when a horizontal badge drag ends on a different candle. The price is
+     * unchanged — only the level's time anchor moved. Persist `toTimestamp` and echo it as the
+     * level's `"timestamp"` in your next [setLevels] if you keep anchors server-side.
+     */
+    var onOrderLineMoved: ((BridgeEvent.OrderLineMoved) -> Unit)? = null
+
+    /**
      * Called whenever a chart flyout/modal/dropdown opens or closes.
      * Most hosts won't need this — [hasOpenUI] is maintained automatically and
      * [dismissAllUI] is the usual integration point.
@@ -337,6 +357,10 @@ class ActtraderChartsView @JvmOverloads constructor(
             is BridgeEvent.DraftInitiated             -> onDraftInitiated?.invoke(event)
             is BridgeEvent.DraftCancelled      -> onDraftCancelled?.invoke(event)
             is BridgeEvent.TfcToggle           -> onTfcToggle?.invoke(event)
+            is BridgeEvent.CrosshairToggle     -> onCrosshairToggle?.invoke(event)
+            is BridgeEvent.OrderLineMoveStart  -> onOrderLineMoveStart?.invoke(event)
+            is BridgeEvent.OrderLineMoving     -> onOrderLineMoving?.invoke(event)
+            is BridgeEvent.OrderLineMoved      -> onOrderLineMoved?.invoke(event)
             is BridgeEvent.UiStateChange       -> {
                 hasOpenUI = event.hasOpenUI
                 onUiStateChange?.invoke(event)
@@ -551,6 +575,33 @@ class ActtraderChartsView @JvmOverloads constructor(
          */
         layoutSync: LayoutSync? = null,
         /**
+         * Puts a crosshair on/off switch in the chart header. The crosshair starts on (see
+         * [crosshairEnabled]) so the icon is tinted; tapping it hides the crosshair — and the
+         * floating trade button that rides on it — and drops the icon to its plain state;
+         * tapping again brings both back. Fires [onCrosshairToggle]. Default: `false`.
+         */
+        enableCrossHairHeader: Boolean? = null,
+        /**
+         * Whether the crosshair is drawn at all. `false` hides it and the floating trade
+         * button until [setCrosshairEnabled] turns it back on — use it to restore a
+         * persisted [onCrosshairToggle] choice. Default: `true`.
+         */
+        crosshairEnabled: Boolean? = null,
+        /**
+         * Enables horizontal (time-axis) order-line dragging for levels flagged
+         * `"timeDraggable" to true` in [setLevels] — open positions and pending orders alike.
+         * Sideways drags keep the price locked and fire [onOrderLineMoved]; a pending order's
+         * badge still drags vertically to move its entry price (the first movement picks the
+         * axis). Broker-gated — enable only for the users who should have it. Default: `false`.
+         */
+        orderLineTimeDrag: Boolean? = null,
+        /** Snap a horizontally dragged badge to the nearest candle on release. Default: `true`. */
+        orderLineDragSnap: Boolean? = null,
+        /** Remember dropped badge positions in the WebView's `localStorage` across reloads. Default: `true`. */
+        orderLineAnchorPersistence: Boolean? = null,
+        /** Where an un-dragged `timeDraggable` badge sits: `"timestamp"` (default) or `"center"`. */
+        orderLineDefaultAnchor: String? = null,
+        /**
          * Raw JSON string from a prior [onStateSnapshot] callback. When provided, the full chart state
          * (timeframe, series, indicators, drawings, etc.) is restored atomically alongside the init
          * command — both are evaluated in a single `evaluateJavascript` call, so there is no
@@ -603,6 +654,12 @@ class ActtraderChartsView @JvmOverloads constructor(
         initialCompares = initialCompares,
         maxCompares = maxCompares,
         layoutSync = layoutSync,
+        enableCrossHairHeader = enableCrossHairHeader,
+        crosshairEnabled = crosshairEnabled,
+        orderLineTimeDrag = orderLineTimeDrag,
+        orderLineDragSnap = orderLineDragSnap,
+        orderLineAnchorPersistence = orderLineAnchorPersistence,
+        orderLineDefaultAnchor = orderLineDefaultAnchor,
         )
         if (stateJson == null) {
             sendCommand(initCmd)
@@ -639,6 +696,13 @@ class ActtraderChartsView @JvmOverloads constructor(
      * was passed to [init]. Use to restore a user's persisted sync preferences.
      */
     fun setLayoutSync(sync: LayoutSync) = sendCommand(BridgeCommand.SetLayoutSync(sync))
+
+    /**
+     * Shows or hides the crosshair at runtime — and with it the floating trade button that
+     * rides on it. Same effect as tapping the header switch (`enableCrossHairHeader` in
+     * [init]): the switch follows, and [onCrosshairToggle] fires when the state changes.
+     */
+    fun setCrosshairEnabled(enabled: Boolean) = sendCommand(BridgeCommand.SetCrosshairEnabled(enabled))
 
     /**
      * Changes the chart series type.

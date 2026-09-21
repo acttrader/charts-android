@@ -227,6 +227,49 @@ sealed class BridgeEvent {
     data class TfcToggle(val enabled: Boolean) : BridgeEvent()
 
     /**
+     * The crosshair was switched on or off — via the header switch (`enableCrossHairHeader`)
+     * or [BridgeCommand.SetCrosshairEnabled]. Persist [enabled] and seed it back through
+     * `crosshairEnabled` on the next init.
+     */
+    data class CrosshairToggle(val enabled: Boolean) : BridgeEvent()
+
+    /**
+     * A horizontal (time-axis) badge drag started — before any movement. Requires
+     * `orderLineTimeDrag` and a level flagged `timeDraggable`.
+     */
+    data class OrderLineMoveStart(
+        val label: String,
+        /** Unix-ms time anchor the badge started from. */
+        val fromTimestamp: Long,
+        val fromBarIndex: Int,
+        val isFullscreen: Boolean,
+    ) : BridgeEvent()
+
+    /** Live position during a horizontal badge drag — fires on every move, before release. */
+    data class OrderLineMoving(
+        val label: String,
+        /** Unix-ms time under the badge right now. */
+        val toTimestamp: Long,
+        val toBarIndex: Int,
+        val isFullscreen: Boolean,
+    ) : BridgeEvent()
+
+    /**
+     * A horizontal badge drag ended on a different candle (after snapping, when enabled). The
+     * price is unchanged — only the level's time anchor moved. [data] is the level's original
+     * map serialised as a raw JSON string.
+     */
+    data class OrderLineMoved(
+        val label: String,
+        val fromTimestamp: Long,
+        val toTimestamp: Long,
+        val fromBarIndex: Int,
+        val toBarIndex: Int,
+        val data: String,
+        val isFullscreen: Boolean,
+    ) : BridgeEvent()
+
+    /**
      * Emitted whenever any dismissible chart UI (flyout, modal, dropdown, popover) opens or closes.
      * Paired with [BridgeCommand.DismissAllUI], this lets the hosting Activity decide whether
      * the hardware back button should dismiss chart UI or propagate to normal back navigation.
@@ -511,6 +554,32 @@ object BridgeEventParser {
             )
 
             "tfcToggle" -> BridgeEvent.TfcToggle(p.getBoolean("enabled"))
+
+            "crosshairToggle" -> BridgeEvent.CrosshairToggle(p.getBoolean("enabled"))
+
+            "orderLineMoveStart" -> BridgeEvent.OrderLineMoveStart(
+                label         = p.getString("label"),
+                fromTimestamp = p.getLong("fromTimestamp"),
+                fromBarIndex  = p.getInt("fromBarIndex"),
+                isFullscreen  = p.optBoolean("isFullscreen", false),
+            )
+
+            "orderLineMoving" -> BridgeEvent.OrderLineMoving(
+                label        = p.getString("label"),
+                toTimestamp  = p.getLong("toTimestamp"),
+                toBarIndex   = p.getInt("toBarIndex"),
+                isFullscreen = p.optBoolean("isFullscreen", false),
+            )
+
+            "orderLineMoved" -> BridgeEvent.OrderLineMoved(
+                label         = p.getString("label"),
+                fromTimestamp = p.getLong("fromTimestamp"),
+                toTimestamp   = p.getLong("toTimestamp"),
+                fromBarIndex  = p.getInt("fromBarIndex"),
+                toBarIndex    = p.getInt("toBarIndex"),
+                data          = p.optJSONObject("data")?.toString() ?: p.optString("data", "{}"),
+                isFullscreen  = p.optBoolean("isFullscreen", false),
+            )
 
             "uiStateChange" -> BridgeEvent.UiStateChange(p.optBoolean("hasOpenUI", false))
 
