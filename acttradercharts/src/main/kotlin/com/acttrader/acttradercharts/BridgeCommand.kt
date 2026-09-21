@@ -227,6 +227,44 @@ sealed class BridgeCommand {
          * live chart via [ActtraderChartsView.setLayoutSync].
          */
         val layoutSync: LayoutSync? = null,
+        /**
+         * Puts a crosshair on/off switch in the chart header. The crosshair itself starts
+         * on (see [crosshairEnabled]) so the icon is tinted; tapping it hides the crosshair
+         * — and the floating trade button that rides on it — and drops the icon to its plain
+         * state; tapping again brings both back. Each tap emits [BridgeEvent.CrosshairToggle]
+         * so the host can persist the choice. Default: `false`.
+         */
+        val enableCrossHairHeader: Boolean? = null,
+        /**
+         * Whether the crosshair is drawn at all. `false` hides it and the floating trade
+         * button, ignores mirrored crosshair positions and keeps the long-press crosshair
+         * from arming. Seeds the header switch when [enableCrossHairHeader] is on; change it
+         * later via [ActtraderChartsView.setCrosshairEnabled]. Default: `true`.
+         */
+        val crosshairEnabled: Boolean? = null,
+        /**
+         * Enables horizontal (time-axis) order-line dragging. A level passed to [SetLevels]
+         * with `"timeDraggable" to true` — open positions and pending orders alike — can have
+         * its info-box badge dragged left/right to re-anchor it to another candle; a
+         * `"timestamp"` (unix ms) says which candle the badge starts over. Sideways drags keep
+         * the price locked and end in [BridgeEvent.OrderLineMoved]; a pending order's badge
+         * still drags vertically to move its entry price — the first movement picks the axis.
+         * Broker-gated: enable it only for the users who should have it. Default: `false`.
+         */
+        val orderLineTimeDrag: Boolean? = null,
+        /** Snap a horizontally dragged badge to the nearest candle on release. Default: `true`. */
+        val orderLineDragSnap: Boolean? = null,
+        /**
+         * Remember where each badge was dropped (WebView `localStorage`, keyed by level label)
+         * so it comes back to the same candle after a reload. Default: `true`.
+         */
+        val orderLineAnchorPersistence: Boolean? = null,
+        /**
+         * Where an un-dragged `timeDraggable` badge sits: `"timestamp"` (over the candle at
+         * the level's `timestamp`) or `"center"` (mid-chart, so a fresh market order does not
+         * land on the latest candle at the right edge). Default: `"timestamp"`.
+         */
+        val orderLineDefaultAnchor: String? = null,
     ) : BridgeCommand() {
         override fun toJson(): String = JSONObject().apply {
             put("type", "init")
@@ -298,6 +336,12 @@ sealed class BridgeCommand {
                 initialCompares?.let { put("initialCompares", JSONArray(it)) }
                 maxCompares?.let { put("maxCompares", it) }
                 layoutSync?.let { put("layoutSync", it.toJson()) }
+                enableCrossHairHeader?.let { put("enableCrossHairHeader", it) }
+                crosshairEnabled?.let { put("crosshairEnabled", it) }
+                orderLineTimeDrag?.let { put("orderLineTimeDrag", it) }
+                orderLineDragSnap?.let { put("orderLineDragSnap", it) }
+                orderLineAnchorPersistence?.let { put("orderLineAnchorPersistence", it) }
+                orderLineDefaultAnchor?.let { put("orderLineDefaultAnchor", it) }
             })
         }.toString()
     }
@@ -402,6 +446,18 @@ sealed class BridgeCommand {
         override fun toJson(): String = JSONObject().apply {
             put("type", "setLayoutSync")
             put("payload", sync.toJson())
+        }.toString()
+    }
+
+    /**
+     * Shows or hides the crosshair at runtime — together with the floating trade button
+     * that rides on it. Same effect as tapping the header switch ([Init.enableCrossHairHeader]);
+     * the switch follows, and [BridgeEvent.CrosshairToggle] fires when the state changes.
+     */
+    data class SetCrosshairEnabled(val enabled: Boolean) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setCrosshairEnabled")
+            put("payload", JSONObject().apply { put("enabled", enabled) })
         }.toString()
     }
 
