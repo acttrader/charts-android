@@ -211,7 +211,8 @@ parentLayout.addView(chart)
 | `setTimezone(timezone)` | Change display timezone at runtime — IANA string (`"America/New_York"`) or `"local"` |
 | `setLayoutSync(sync)` | Update the layout popover's cross-pane sync toggles (`LayoutSync`, partial). Only with `enableMultipleLayouts = true`. See [Multi-pane layouts](#multi-pane-layouts--snapshot) |
 | `setCrosshairEnabled(enabled)` | Show or hide the crosshair at runtime, together with the floating trade button that rides on it. Same effect as tapping the header switch (`enableCrossHairHeader`); fires `onCrosshairToggle` when the state changes |
-| `setThemeOverrides(overrides)` | Update per-theme color overrides at runtime — accepts typed `ThemeOverrides` or raw JSON string |
+| `setThemeOverrides(overrides)` | Update per-theme color overrides at runtime — canvas **and** chrome — accepts typed `ThemeOverrides` or raw JSON string |
+| `setCanvasColors(colors)` | Recolour the **canvas only** at runtime (plot + axes; the header, bottom bar, drawing toolbar and popovers keep their theme) — typed `CanvasColors` or raw JSON string; `null` clears. See [Chart background: canvas only](#chart-background-canvas-only) |
 | `correctBar(barTime, bar)` | Replace a specific bar with authoritative OHLCV data (e.g. server correction) |
 | **Compare** | |
 | `addCompare(symbol)` | Add a compare symbol overlay. Fires `onCompareDataRequest` — reply via `resolveCompareDataRequest` |
@@ -363,6 +364,19 @@ chart.setThemeOverrides(ThemeOverrides(
 All properties at every level are optional — only supply the ones you want to change. Available nested types: `TooltipColors`, `CandleColors`, `VolumeColors`, `UiColors`, `StreamColors`, `DrawingToolbarColors`, `TopBarColors`, `BottomBarColors`, `IndicatorOverlayColors`, `TradeLevelColors`, `TradePanelColors`.
 
 > Raw JSON strings are still supported via `themeOverridesJson` / `setThemeOverrides(jsonString)` for backward compatibility.
+
+#### Chart background: canvas only
+
+`setThemeOverrides(ThemeOverrides(dark = ChartThemeOverride(background = …)))` recolours the **whole chart** by design — the theme's `background` token also paints the header, the bottom bar, the drawing toolbar and every popover. For a background that must stay inside the plot, use the canvas picks instead: `canvasColorsJson` at `init()`, or `setCanvasColors(...)` at runtime. They are the same picks the in-chart Chart Settings dialog writes, so they are scoped to the plot and its axes and persisted in the state snapshot.
+
+```kotlin
+// At init
+chart.init(canvasColorsJson = """{"dark":{"background":"#ff00ff"},"light":{"background":"#ffffff"}}""")
+
+// At runtime — typed or raw JSON; null clears the picks
+chart.setCanvasColors(CanvasColors(dark = CanvasColorPicks(background = "#ff00ff", grid = "#5a005a")))
+chart.setCanvasColors(null)
+```
 
 ### Fonts
 

@@ -245,3 +245,60 @@ data class TradePanelColors(
         rowSubText?.let { put("rowSubText", it) }
     }
 }
+
+// ── Canvas-only colours ──────────────────────────────────────────────────────
+
+/**
+ * Per-theme colour picks for the **canvas only** — what the in-chart Chart Settings
+ * dialog offers. Passed as `canvasColorsJson` at init or via
+ * [ActtraderChartsView.setCanvasColors] at runtime. Unlike [ThemeOverrides], the
+ * surface picks (`background`, `grid`, `axisText`, `axisBorder`, `crosshair`) never
+ * reach the chrome — header, bottom bar, drawing toolbar, dialogs, popovers.
+ *
+ * ```kotlin
+ * chart.setCanvasColors(CanvasColors(dark = CanvasColorPicks(background = "#ff00ff")))
+ * ```
+ */
+data class CanvasColors(
+    val dark: CanvasColorPicks? = null,
+    val light: CanvasColorPicks? = null,
+) {
+    /** Serialises to the JSON string expected by the bridge. */
+    fun toJsonString(): String = JSONObject().apply {
+        dark?.let { put("dark", it.toJson()) }
+        light?.let { put("light", it.toJson()) }
+    }.toString()
+}
+
+/** One theme mode's canvas picks. Every property is optional. */
+data class CanvasColorPicks(
+    val background: String? = null,
+    val grid: String? = null,
+    val axisText: String? = null,
+    val axisBorder: String? = null,
+    val crosshair: String? = null,
+    val candleUp: String? = null,
+    val candleDown: String? = null,
+    val wickUp: String? = null,
+    val wickDown: String? = null,
+    val borderUp: String? = null,
+    val borderDown: String? = null,
+    val volumeUp: String? = null,
+    val volumeDown: String? = null,
+) {
+    internal fun toJson(): JSONObject = JSONObject().apply {
+        background?.let { put("background", it) }
+        grid?.let { put("grid", it) }
+        axisText?.let { put("axisText", it) }
+        axisBorder?.let { put("axisBorder", it) }
+        crosshair?.let { put("crosshair", it) }
+        candleUp?.let { put("candleUp", it) }
+        candleDown?.let { put("candleDown", it) }
+        wickUp?.let { put("wickUp", it) }
+        wickDown?.let { put("wickDown", it) }
+        borderUp?.let { put("borderUp", it) }
+        borderDown?.let { put("borderDown", it) }
+        volumeUp?.let { put("volumeUp", it) }
+        volumeDown?.let { put("volumeDown", it) }
+    }
+}
