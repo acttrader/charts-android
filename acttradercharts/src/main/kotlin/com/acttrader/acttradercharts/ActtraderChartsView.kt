@@ -602,6 +602,12 @@ class ActtraderChartsView @JvmOverloads constructor(
         /** Where an un-dragged `timeDraggable` badge sits: `"timestamp"` (default) or `"center"`. */
         orderLineDefaultAnchor: String? = null,
         /**
+         * Widen the price axis when a level gains a new SL/TP that sits outside the
+         * visible range, so the line placed from your order form comes into view.
+         * Default: `false`.
+         */
+        revealNewBrackets: Boolean? = null,
+        /**
          * Raw JSON string from a prior [onStateSnapshot] callback. When provided, the full chart state
          * (timeframe, series, indicators, drawings, etc.) is restored atomically alongside the init
          * command — both are evaluated in a single `evaluateJavascript` call, so there is no
@@ -660,6 +666,7 @@ class ActtraderChartsView @JvmOverloads constructor(
         orderLineDragSnap = orderLineDragSnap,
         orderLineAnchorPersistence = orderLineAnchorPersistence,
         orderLineDefaultAnchor = orderLineDefaultAnchor,
+        revealNewBrackets = revealNewBrackets,
         )
         if (stateJson == null) {
             sendCommand(initCmd)

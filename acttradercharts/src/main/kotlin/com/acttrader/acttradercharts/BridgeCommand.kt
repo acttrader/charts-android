@@ -265,6 +265,12 @@ sealed class BridgeCommand {
          * land on the latest candle at the right edge). Default: `"timestamp"`.
          */
         val orderLineDefaultAnchor: String? = null,
+        /**
+         * When a level gains a new SL/TP (from [SetLevels] or [UpdateLevelBracket]) whose
+         * price sits outside the visible price range, widen the price axis so the new line
+         * comes into view with the candles already on screen. Default: `false`.
+         */
+        val revealNewBrackets: Boolean? = null,
     ) : BridgeCommand() {
         override fun toJson(): String = JSONObject().apply {
             put("type", "init")
@@ -342,6 +348,7 @@ sealed class BridgeCommand {
                 orderLineDragSnap?.let { put("orderLineDragSnap", it) }
                 orderLineAnchorPersistence?.let { put("orderLineAnchorPersistence", it) }
                 orderLineDefaultAnchor?.let { put("orderLineDefaultAnchor", it) }
+                revealNewBrackets?.let { put("revealNewBrackets", it) }
             })
         }.toString()
     }

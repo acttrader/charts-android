@@ -92,6 +92,13 @@ chart.setLevels(
     ),
     labelKey = "label", priceKey = "price", type = "position",
 )
+```
+
+A trailing stop is still a working stop, so keep passing its price as `stopLossPrice` and add `"stopLossTrailing" to true`: the line renders with a **TSL** pill and is read-only on the chart (no drag handle, no ×) — the trail is edited in pips from your own order form.
+
+```kotlin
+mapOf("label" to "POS-2", "price" to 1.0850, "side" to "buy", "lots" to 1.0,
+      "stopLossPrice" to 1.0800, "stopLossTrailing" to true)
 // pills render: SL -$290.80   TP +$189.20
 ```
 
@@ -296,6 +303,7 @@ chart.loadData(bars)
 | `orderLineDragSnap` | `Boolean?` | `null` (`true`) | Snap a horizontally dragged badge to the nearest candle on release |
 | `orderLineAnchorPersistence` | `Boolean?` | `null` (`true`) | Remember dropped badge positions in the WebView's `localStorage` (keyed by level label) across reloads |
 | `orderLineDefaultAnchor` | `String?` | `null` (`"timestamp"`) | Where an un-dragged `timeDraggable` badge sits: `"timestamp"` (over the candle at the level's `timestamp`) or `"center"` (mid-chart) |
+| `revealNewBrackets` | `Boolean?` | `null` (`false`) | When a level gains a new SL/TP (via `setLevels` or `updateLevelBracket`) whose price is outside the visible range, widen the price axis so the new line comes into view with the candles already on screen |
 | `timezone` | `String?` | `null` (`"UTC"`) | IANA timezone string for time-axis and crosshair labels. `"UTC"` (default), `"local"` (device timezone), or any IANA string (`"America/New_York"`, `"Europe/London"`, etc.) |
 | `uiConfigJson` | `String?` | `null` | Per-component UI configuration overrides (font sizes, icon sizes, spacing) as a raw JSON string. See *Mobile icon sizing* below. |
 | `themeOverrides` | `ThemeOverrides?` | `null` | Typed per-theme color overrides. See *Theme overrides* below. |
