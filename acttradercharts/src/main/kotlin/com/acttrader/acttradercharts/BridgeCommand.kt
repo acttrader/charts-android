@@ -1014,6 +1014,22 @@ sealed class BridgeCommand {
     }
 
     /**
+     * Recolours the **canvas only** at runtime — the plot and its axes — and leaves the
+     * chrome (header, bottom bar, drawing toolbar, dialogs, popovers) on the theme from
+     * [SetThemeOverrides]. Same per-theme picks as the in-chart Chart Settings dialog.
+     * @param colorsJson Raw JSON string, e.g. `{"dark":{"background":"#ff00ff"},"light":{"background":"#fff"}}`;
+     *                   `null` clears the picks.
+     */
+    data class SetCanvasColors(val colorsJson: String?) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setCanvasColors")
+            put("payload", JSONObject().apply {
+                if (colorsJson == null) put("colors", JSONObject.NULL) else putJson("colors", colorsJson)
+            })
+        }.toString()
+    }
+
+    /**
      * Replaces a specific bar with authoritative OHLCV data (e.g. a correction from the server).
      * @param barTime Unix millisecond timestamp of the bar to replace.
      */

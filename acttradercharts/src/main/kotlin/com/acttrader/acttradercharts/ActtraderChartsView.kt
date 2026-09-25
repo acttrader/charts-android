@@ -1045,6 +1045,21 @@ class ActtraderChartsView @JvmOverloads constructor(
     fun setThemeOverrides(overrides: ThemeOverrides) = sendCommand(BridgeCommand.SetThemeOverrides(overrides.toJsonString()))
 
     /**
+     * Recolours the **canvas only** at runtime: `background`, `grid`, `axisText`,
+     * `axisBorder`, `crosshair` repaint the plot and its axes, while the chrome (header,
+     * bottom bar, drawing toolbar, dialogs, popovers) keeps the theme from [setThemeOverrides].
+     * Use this — not `setThemeOverrides(ThemeOverrides(dark = ChartThemeOverride(background = …)))`,
+     * which by design paints the whole chart — for a chart background that must stay inside
+     * the plot. Same per-theme picks as the in-chart Chart Settings dialog; persisted in the
+     * state snapshot.
+     * @param colorsJson Raw JSON string, e.g. `{"dark":{"background":"#ff00ff"}}`; `null` clears the picks.
+     */
+    fun setCanvasColors(colorsJson: String?) = sendCommand(BridgeCommand.SetCanvasColors(colorsJson))
+
+    /** Recolours the canvas only using typed [CanvasColors]. */
+    fun setCanvasColors(colors: CanvasColors) = sendCommand(BridgeCommand.SetCanvasColors(colors.toJsonString()))
+
+    /**
      * Replaces a specific bar with authoritative OHLCV data (e.g. a correction from the server).
      * @param barTime Unix millisecond timestamp of the bar to replace.
      */
