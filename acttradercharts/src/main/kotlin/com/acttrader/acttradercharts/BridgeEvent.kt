@@ -376,34 +376,7 @@ sealed class BridgeEvent {
         val shortName: String,
     ) : BridgeEvent()
 
-    // ── Snapshot ──────────────────────────────────────────────────────────────
-
-    /**
-     * The chart was captured — by the user picking Download/Copy, or by
-     * [BridgeCommand.RequestSnapshot].
-     *
-     * @param dataUrl A PNG `data:` URL. Strip the `data:image/png;base64,` prefix and
-     *   `Base64.decode` the rest to get the bytes, then save or share them — the
-     *   in-WebView browser download does not work on Android.
-     * @param action `"download"` or `"copy"` — which one the user asked for.
-     */
-    data class Snapshot(val dataUrl: String, val action: String) : BridgeEvent()
-
     // ── Layouts ───────────────────────────────────────────────────────────────
-
-    /**
-     * The user picked a grid preset or toggled a sync switch. Mount or tear down
-     * panes to match — the chart owns only the picker.
-     *
-     * @param presetId Id of the chosen preset.
-     * @param paneCount How many panes the preset asks for.
-     * @param syncJson The sync toggles as a JSON object.
-     */
-    data class LayoutChange(
-        val presetId: String,
-        val paneCount: Int,
-        val syncJson: String,
-    ) : BridgeEvent()
 
     /**
      * A workspace was saved as a named layout. **Persist [layoutJson]** — the chart
@@ -820,17 +793,6 @@ object BridgeEventParser {
             "indicatorRemoved" -> BridgeEvent.IndicatorRemoved(
                 instanceId = p.getString("instanceId"),
                 shortName  = p.getString("shortName"),
-            )
-
-            "snapshot" -> BridgeEvent.Snapshot(
-                dataUrl = p.getString("dataUrl"),
-                action  = p.optString("action", "download"),
-            )
-
-            "layoutChange" -> BridgeEvent.LayoutChange(
-                presetId  = p.getString("presetId"),
-                paneCount = p.optJSONObject("preset")?.optInt("count", 0) ?: 0,
-                syncJson  = (p.optJSONObject("sync") ?: JSONObject()).toString(),
             )
 
             "layoutSaved" -> {
