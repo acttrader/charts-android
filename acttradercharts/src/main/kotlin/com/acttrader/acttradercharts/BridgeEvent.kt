@@ -376,6 +376,178 @@ sealed class BridgeEvent {
         val shortName: String,
     ) : BridgeEvent()
 
+    // ── Snapshot ──────────────────────────────────────────────────────────────
+
+    /**
+     * The chart was captured — by the user picking Download/Copy, or by
+     * [BridgeCommand.RequestSnapshot].
+     *
+     * @param dataUrl A PNG `data:` URL. Strip the `data:image/png;base64,` prefix and
+     *   `Base64.decode` the rest to get the bytes, then save or share them — the
+     *   in-WebView browser download does not work on Android.
+     * @param action `"download"` or `"copy"` — which one the user asked for.
+     */
+    data class Snapshot(val dataUrl: String, val action: String) : BridgeEvent()
+
+    // ── Layouts ───────────────────────────────────────────────────────────────
+
+    /**
+     * The user picked a grid preset or toggled a sync switch. Mount or tear down
+     * panes to match — the chart owns only the picker.
+     *
+     * @param presetId Id of the chosen preset.
+     * @param paneCount How many panes the preset asks for.
+     * @param syncJson The sync toggles as a JSON object.
+     */
+    data class LayoutChange(
+        val presetId: String,
+        val paneCount: Int,
+        val syncJson: String,
+    ) : BridgeEvent()
+
+    /**
+     * A workspace was saved as a named layout. **Persist [layoutJson]** — the chart
+     * holds it only for the lifetime of the view.
+     */
+    data class LayoutSaved(val id: String, val name: String, val layoutJson: String) : BridgeEvent()
+
+    /** A saved layout was restored. [layoutJson] carries every pane, for lazy mounting. */
+    data class LayoutApplied(
+        val id: String,
+        val name: String,
+        val presetId: String,
+        val layoutJson: String,
+    ) : BridgeEvent()
+
+    /** A saved layout was deleted. Remove it from your storage too. */
+    data class LayoutDeleted(val id: String) : BridgeEvent()
+
+    // ── Indicator templates ───────────────────────────────────────────────────
+
+    /**
+     * An indicator set was saved as a named template. **Persist [templateJson]** —
+     * the chart holds it only for the lifetime of the view.
+     */
+    data class IndicatorTemplateSaved(
+        val id: String,
+        val name: String,
+        val templateJson: String,
+    ) : BridgeEvent()
+
+    /** A template's indicators replaced the chart's active set. */
+    data class IndicatorTemplateApplied(
+        val id: String,
+        val name: String,
+        val count: Int,
+    ) : BridgeEvent()
+
+    /** An indicator template was deleted. Remove it from your storage too. */
+    data class IndicatorTemplateDeleted(val id: String) : BridgeEvent()
+
+    // ── Chart-settings templates ──────────────────────────────────────────────
+
+    /** A settings template was saved. **Persist [templateJson].** */
+    data class SettingsTemplateSaved(
+        val id: String,
+        val name: String,
+        val templateJson: String,
+    ) : BridgeEvent()
+
+    /** A settings template was applied to this chart. */
+    data class SettingsTemplateApplied(val id: String, val name: String) : BridgeEvent()
+
+    /** A settings template was deleted. Remove it from your storage too. */
+    data class SettingsTemplateDeleted(val id: String) : BridgeEvent()
+
+    /**
+     * Settings were applied from the Chart Settings dialog.
+     *
+     * This chart has already applied them. When [applyToAll] is true the user asked
+     * for every chart — send [settingsJson] to each of your other panes with
+     * [BridgeCommand.ApplyChartSettings].
+     */
+    data class ChartSettingsApplied(
+        val settingsJson: String,
+        val applyToAll: Boolean,
+    ) : BridgeEvent()
+
+    // ── Quick Search ──────────────────────────────────────────────────────────
+
+    /**
+     * A Quick Search command ran. It has already executed — use this for analytics,
+     * or to mirror the action into your own chrome.
+     */
+    data class QuickSearchCommand(
+        val id: String,
+        val label: String,
+        val group: String,
+    ) : BridgeEvent()
+
+    // ── Cursors ───────────────────────────────────────────────────────────────
+
+    /**
+     * The pointer mode changed — via [BridgeCommand.SetCursorMode] or the Cursors
+     * group in the drawing toolbar. Persist it to restore the user's choice.
+     */
+    data class CursorModeChange(val mode: String) : BridgeEvent()
+
+    // ── Drawing toolbar options ───────────────────────────────────────────────
+
+    /** Magnet mode toggled from the toolbar. Persist it to restore the choice. */
+    data class MagnetModeChange(val enabled: Boolean) : BridgeEvent()
+
+    /** Keep-drawing mode toggled from the toolbar. */
+    data class KeepDrawingModeChange(val enabled: Boolean) : BridgeEvent()
+
+    /** "Copy to all charts" toggled from the toolbar. */
+    data class CopyDrawingsToAllChange(val enabled: Boolean) : BridgeEvent()
+
+    /** The drawing toolbar was shown or hidden. */
+    data class DrawingToolbarVisibility(val visible: Boolean) : BridgeEvent()
+
+    /**
+     * A drawing was completed.
+     *
+     * When [copyToAll] is true the user asked for new drawings to appear on every
+     * chart in the layout — send [drawingJson] to your other chart views. The
+     * chart cannot do it itself; only your app knows which panes exist.
+     */
+    data class DrawingCreated(
+        val type: String,
+        val drawingJson: String,
+        val copyToAll: Boolean,
+    ) : BridgeEvent()
+
+    /** Decimal places for prices changed, whether pinned or re-inferred. */
+    data class PricePrecisionChange(val digits: Int) : BridgeEvent()
+
+    /** Bar colouring switched. [source] is `"open"` or `"previousClose"`. */
+    data class BarColorSourceChange(val source: String) : BridgeEvent()
+
+    /** The display timezone changed. Always a resolved IANA name, never `"local"`. */
+    data class TimezoneChange(val timezone: String) : BridgeEvent()
+
+    /** A status-line field was shown or hidden. [statusLineJson] carries the whole set. */
+    data class StatusLineChange(val statusLineJson: String) : BridgeEvent()
+
+    /** A scales option changed. [scalesJson] carries the whole set. */
+    data class ScalesChange(val scalesJson: String) : BridgeEvent()
+
+    /** A canvas option changed. [canvasJson] carries the whole set. */
+    data class CanvasOptionsChange(val canvasJson: String) : BridgeEvent()
+
+    /** The price axis switched. [mode] is `"normal"`, `"log"` or `"percent"`. */
+    data class PriceScaleModeChange(val mode: String) : BridgeEvent()
+
+    /** Automatic Y-range fitting was turned on or off. */
+    data class AutoScaleChange(val enabled: Boolean) : BridgeEvent()
+
+    /** The chart scrolled to a date. Carries the bar it settled on. */
+    data class GoToDate(val time: Long, val barIndex: Int) : BridgeEvent()
+
+    /** The side panel was shown or hidden. [tab] is `"data"` or `"objects"`. */
+    data class SidePanelVisibility(val visible: Boolean, val tab: String) : BridgeEvent()
+
     /** An error occurred inside the chart engine. */
     data class Error(val message: String, val code: String? = null) : BridgeEvent()
 }
@@ -648,6 +820,137 @@ object BridgeEventParser {
             "indicatorRemoved" -> BridgeEvent.IndicatorRemoved(
                 instanceId = p.getString("instanceId"),
                 shortName  = p.getString("shortName"),
+            )
+
+            "snapshot" -> BridgeEvent.Snapshot(
+                dataUrl = p.getString("dataUrl"),
+                action  = p.optString("action", "download"),
+            )
+
+            "layoutChange" -> BridgeEvent.LayoutChange(
+                presetId  = p.getString("presetId"),
+                paneCount = p.optJSONObject("preset")?.optInt("count", 0) ?: 0,
+                syncJson  = (p.optJSONObject("sync") ?: JSONObject()).toString(),
+            )
+
+            "layoutSaved" -> {
+                val layout = p.getJSONObject("layout")
+                BridgeEvent.LayoutSaved(
+                    id         = layout.getString("id"),
+                    name       = layout.getString("name"),
+                    layoutJson = layout.toString(),
+                )
+            }
+
+            "layoutApplied" -> BridgeEvent.LayoutApplied(
+                id         = p.getString("id"),
+                name       = p.getString("name"),
+                presetId   = p.getString("presetId"),
+                layoutJson = (p.optJSONObject("layout") ?: JSONObject()).toString(),
+            )
+
+            "layoutDeleted" -> BridgeEvent.LayoutDeleted(id = p.getString("id"))
+
+            "indicatorTemplateSaved" -> {
+                val tpl = p.getJSONObject("template")
+                BridgeEvent.IndicatorTemplateSaved(
+                    id           = tpl.getString("id"),
+                    name         = tpl.getString("name"),
+                    templateJson = tpl.toString(),
+                )
+            }
+
+            "indicatorTemplateApplied" -> BridgeEvent.IndicatorTemplateApplied(
+                id    = p.getString("id"),
+                name  = p.getString("name"),
+                count = p.optInt("count", 0),
+            )
+
+            "indicatorTemplateDeleted" -> BridgeEvent.IndicatorTemplateDeleted(id = p.getString("id"))
+
+            "settingsTemplateSaved" -> {
+                val tpl = p.getJSONObject("template")
+                BridgeEvent.SettingsTemplateSaved(
+                    id           = tpl.getString("id"),
+                    name         = tpl.getString("name"),
+                    templateJson = tpl.toString(),
+                )
+            }
+
+            "settingsTemplateApplied" -> BridgeEvent.SettingsTemplateApplied(
+                id   = p.getString("id"),
+                name = p.getString("name"),
+            )
+
+            "settingsTemplateDeleted" -> BridgeEvent.SettingsTemplateDeleted(id = p.getString("id"))
+
+            "chartSettingsApplied" -> BridgeEvent.ChartSettingsApplied(
+                settingsJson = (p.optJSONObject("settings") ?: JSONObject()).toString(),
+                applyToAll   = p.optBoolean("applyToAll", false),
+            )
+
+            "quickSearchCommand" -> BridgeEvent.QuickSearchCommand(
+                id    = p.getString("id"),
+                label = p.optString("label"),
+                group = p.optString("group"),
+            )
+
+            "cursorModeChange" -> BridgeEvent.CursorModeChange(mode = p.getString("mode"))
+
+            "magnetModeChange" -> BridgeEvent.MagnetModeChange(p.getBoolean("enabled"))
+            "keepDrawingModeChange" -> BridgeEvent.KeepDrawingModeChange(p.getBoolean("enabled"))
+            "copyDrawingsToAllChange" -> BridgeEvent.CopyDrawingsToAllChange(p.getBoolean("enabled"))
+            "drawingToolbarVisibility" -> BridgeEvent.DrawingToolbarVisibility(p.getBoolean("visible"))
+
+            "drawingCreated" -> {
+                val drawing = p.getJSONObject("drawing")
+                BridgeEvent.DrawingCreated(
+                    type = drawing.optString("type"),
+                    drawingJson = drawing.toString(),
+                    copyToAll = p.optBoolean("copyToAll", false),
+                )
+            }
+
+            "pricePrecisionChange" -> BridgeEvent.PricePrecisionChange(
+                digits = p.optInt("digits", 2),
+            )
+
+            "barColorSourceChange" -> BridgeEvent.BarColorSourceChange(
+                source = p.optString("source", "open"),
+            )
+
+            "timezoneChange" -> BridgeEvent.TimezoneChange(
+                timezone = p.optString("timezone", "UTC"),
+            )
+
+            "statusLineChange" -> BridgeEvent.StatusLineChange(
+                statusLineJson = p.optJSONObject("statusLine")?.toString() ?: "{}",
+            )
+
+            "scalesChange" -> BridgeEvent.ScalesChange(
+                scalesJson = p.optJSONObject("scales")?.toString() ?: "{}",
+            )
+
+            "canvasOptionsChange" -> BridgeEvent.CanvasOptionsChange(
+                canvasJson = p.optJSONObject("canvas")?.toString() ?: "{}",
+            )
+
+            "priceScaleModeChange" -> BridgeEvent.PriceScaleModeChange(
+                mode = p.optString("mode", "normal"),
+            )
+
+            "autoScaleChange" -> BridgeEvent.AutoScaleChange(
+                enabled = p.optBoolean("enabled", true),
+            )
+
+            "goToDate" -> BridgeEvent.GoToDate(
+                time = p.optLong("time", 0L),
+                barIndex = p.optInt("barIndex", 0),
+            )
+
+            "sidePanelVisibility" -> BridgeEvent.SidePanelVisibility(
+                visible = p.optBoolean("visible", false),
+                tab = p.optString("tab", "data"),
             )
 
             "error" -> BridgeEvent.Error(

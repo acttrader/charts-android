@@ -7,6 +7,14 @@ import org.json.JSONObject
 
 private const val TAG = "ActtraderCharts"
 
+private fun JSONObject.putJsonArray(key: String, json: String) {
+    try {
+        put(key, JSONArray(json))
+    } catch (e: JSONException) {
+        Log.w(TAG, "Dropping malformed JSON array for key '$key': ${e.message}")
+    }
+}
+
 private fun JSONObject.putJson(key: String, json: String) {
     try {
         put(key, JSONObject(json))
@@ -228,6 +236,123 @@ sealed class BridgeCommand {
          */
         val layoutSync: LayoutSync? = null,
         /**
+         * Shows the **Templates** block at the foot of the indicators flyout — named,
+         * reusable indicator sets the user saves from the current chart and re-applies
+         * later. No new header button: the block lives inside the flyout the Indicators
+         * button already opens, so the header is unchanged.
+         *
+         * The chart **persists nothing**. Saving emits
+         * [BridgeEvent.IndicatorTemplateSaved] carrying the template as JSON; store it
+         * yourself and pass it back via [indicatorTemplatesJson] or
+         * [ActtraderChartsView.setIndicatorTemplates]. Default: `false`.
+         */
+        val enableIndicatorTemplates: Boolean? = null,
+        /** Indicator templates to list at init — a JSON array, typically what you stored. */
+        val indicatorTemplatesJson: String? = null,
+        /**
+         * Shows the **Templates** row and the **Apply to all charts** switch in the Chart
+         * Settings dialog — named snapshots of everything that dialog edits. Both live
+         * inside the dialog the settings cog already opens.
+         *
+         * Emits [BridgeEvent.SettingsTemplateSaved] to persist, and
+         * [BridgeEvent.ChartSettingsApplied] (with `applyToAll`) when the user applies —
+         * forward those settings to your other panes with
+         * [ActtraderChartsView.applyChartSettings]. Default: `false`.
+         */
+        val enableSettingsTemplates: Boolean? = null,
+        /** Settings templates to list at init — a JSON array. */
+        val settingsTemplatesJson: String? = null,
+        /**
+         * Shows the **Saved layouts** section in the layout popover — a grid preset plus
+         * every pane's full state (symbol, timeframe, series, indicators, drawings,
+         * viewport, compares), not just the grid shape the preset picker already offers.
+         *
+         * Requires [enableMultipleLayouts]; on its own it does nothing. Emits
+         * [BridgeEvent.LayoutSaved] to persist. Default: `false`.
+         */
+        val enableSavedLayouts: Boolean? = null,
+        /** Saved layouts to list at init — a JSON array. */
+        val savedLayoutsJson: String? = null,
+        /**
+         * Enables **Quick Search**, the command palette over everything the chart can do:
+         * series types, timeframes, durations, indicators, drawing tools, saved templates
+         * and layouts, and the header actions.
+         *
+         * It is keyboard-first on the web (Ctrl/⌘+K, `/`) — on Android there is no such
+         * key, so open it from your own toolbar with
+         * [ActtraderChartsView.openQuickSearch]. Default: `false`.
+         */
+        val enableQuickSearch: Boolean? = null,
+        /**
+         * Adds a search button to the chart header for [enableQuickSearch]. Default
+         * `false`, because a new button would change a header this feature otherwise
+         * leaves alone — most apps drive the palette from their own chrome instead.
+         */
+        val quickSearchShowButton: Boolean? = null,
+        /**
+         * Box/reversal parameters for the price-transform chart types, as a JSON
+         * object — e.g. `{"renko":{"boxSize":{"kind":"fixed","size":5}}}`.
+         *
+         * Omit for the default of **ATR(14)** on every one of them, which is what
+         * you want unless the instrument has a meaningful fixed tick: a box of
+         * "10" is noise on an index and a lifetime on a forex pair.
+         */
+        val seriesOptionsJson: String? = null,
+        /**
+         * Initial pointer behaviour over the plot: `"cross"` (default), `"dot"`,
+         * `"arrow"`, `"demonstration"` (a fading laser trail for screen-sharing)
+         * or `"eraser"` (a tap deletes the drawing under it).
+         *
+         * Independent of the drawing tool. Change it live with
+         * [ActtraderChartsView.setCursorMode].
+         */
+        val cursorMode: String? = null,
+        /**
+         * Shows an OHLCV readout beside a long press, on top of the crosshair it
+         * already arms.
+         *
+         * The OHLC strip at the top of the chart carries the same numbers, but on
+         * a phone it is at the far end of the screen from the finger — the user
+         * has to look away from what they are pointing at. Default: `false`.
+         */
+        val valueTooltip: Boolean? = null,
+        /**
+         * Adds a **Cursors** group to the top of the drawing toolbar (Cross, Dot,
+         * Arrow, Demonstration, Eraser).
+         *
+         * A flag rather than always-on because it adds a category to a toolbar
+         * apps have laid out around its current contents. With it off the group is
+         * absent and the toolbar is unchanged; the modes stay reachable from
+         * [ActtraderChartsView.setCursorMode]. Default: `false`.
+         */
+        val enableCursorModes: Boolean? = null,
+        val enableIconTools: Boolean? = null,
+        val enableChartSettings: Boolean? = null,
+        /** What the status line shows. Null leaves every field at its default. */
+        val statusLineJson: String? = null,
+        /** Price/time axis options, including precision and timezone. */
+        val scalesJson: String? = null,
+        /** Grid, watermark and crosshair options. */
+        val canvasJson: String? = null,
+        /** `"open"` (default) or `"previousClose"`. */
+        val barColorSource: String? = null,
+        val enableScaleControls: Boolean? = null,
+        /** `"normal"` (default), `"log"` or `"percent"`. */
+        val priceScaleMode: String? = null,
+        val autoScale: Boolean? = null,
+        val enableSidePanels: Boolean? = null,
+        /** Snap drawing points to the nearest OHLC of the bar under the cursor. Default: `false`. */
+        val magnetMode: Boolean? = null,
+        /** Keep the drawing tool armed after each completed drawing. Default: `false`. */
+        val keepDrawingMode: Boolean? = null,
+        /**
+         * Announce every new drawing via [BridgeEvent.DrawingCreated] with
+         * `copyToAll = true`, so your app can replicate it across the other panes
+         * of a layout. The chart cannot do it itself — only you know which other
+         * panes exist. Default: `false`.
+         */
+        val copyDrawingsToAllCharts: Boolean? = null,
+        /**
          * Puts a crosshair on/off switch in the chart header. The crosshair itself starts
          * on (see [crosshairEnabled]) so the icon is tinted; tapping it hides the crosshair
          * — and the floating trade button that rides on it — and drops the icon to its plain
@@ -342,6 +467,33 @@ sealed class BridgeCommand {
                 initialCompares?.let { put("initialCompares", JSONArray(it)) }
                 maxCompares?.let { put("maxCompares", it) }
                 layoutSync?.let { put("layoutSync", it.toJson()) }
+                enableIndicatorTemplates?.let { put("enableIndicatorTemplates", it) }
+                indicatorTemplatesJson?.let { putJsonArray("indicatorTemplates", it) }
+                enableSettingsTemplates?.let { put("enableSettingsTemplates", it) }
+                settingsTemplatesJson?.let { putJsonArray("settingsTemplates", it) }
+                enableSavedLayouts?.let { put("enableSavedLayouts", it) }
+                savedLayoutsJson?.let { putJsonArray("savedLayouts", it) }
+                enableQuickSearch?.let { put("enableQuickSearch", it) }
+                quickSearchShowButton?.let {
+                    put("quickSearch", JSONObject().apply { put("showButton", it) })
+                }
+                seriesOptionsJson?.let { putJson("seriesOptions", it) }
+                cursorMode?.let { put("cursorMode", it) }
+                valueTooltip?.let { put("valueTooltip", it) }
+                enableCursorModes?.let { put("enableCursorModes", it) }
+                enableIconTools?.let { put("enableIconTools", it) }
+                enableChartSettings?.let { put("enableChartSettings", it) }
+                statusLineJson?.let { putJson("statusLine", it) }
+                scalesJson?.let { putJson("scales", it) }
+                canvasJson?.let { putJson("canvas", it) }
+                barColorSource?.let { put("barColorSource", it) }
+                enableScaleControls?.let { put("enableScaleControls", it) }
+                priceScaleMode?.let { put("priceScaleMode", it) }
+                autoScale?.let { put("autoScale", it) }
+                enableSidePanels?.let { put("enableSidePanels", it) }
+                magnetMode?.let { put("magnetMode", it) }
+                keepDrawingMode?.let { put("keepDrawingMode", it) }
+                copyDrawingsToAllCharts?.let { put("copyDrawingsToAllCharts", it) }
                 enableCrossHairHeader?.let { put("enableCrossHairHeader", it) }
                 crosshairEnabled?.let { put("crosshairEnabled", it) }
                 orderLineTimeDrag?.let { put("orderLineTimeDrag", it) }
@@ -1116,6 +1268,441 @@ sealed class BridgeCommand {
                     }
                 })
             })
+        }.toString()
+    }
+
+    // ── Snapshot ──────────────────────────────────────────────────────────────
+
+    /**
+     * Captures the chart without the user opening the snapshot popover.
+     *
+     * Replies with [BridgeEvent.Snapshot] carrying a PNG data URL; decode it and
+     * hand it to the platform share sheet or MediaStore. The in-WebView browser
+     * download is skipped, since it is blocked or useless inside a WebView.
+     * Requires `enableSnapshot` in [Init].
+     *
+     * @param action Why you are capturing — forwarded back on the event so one
+     *   handler can tell a share from a copy. `"download"` or `"copy"`.
+     */
+    data class RequestSnapshot(val action: String = "download") : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "requestSnapshot")
+            put("payload", JSONObject().apply { put("action", action) })
+        }.toString()
+    }
+
+    // ── Indicator templates ───────────────────────────────────────────────────
+
+    /**
+     * Replaces the templates listed in the indicators flyout.
+     * @param templatesJson A JSON array of templates, as received on
+     *   [BridgeEvent.IndicatorTemplateSaved] and stored by your app.
+     */
+    data class SetIndicatorTemplates(val templatesJson: String) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setIndicatorTemplates")
+            put("payload", JSONObject().apply { putJsonArray("templates", templatesJson) })
+        }.toString()
+    }
+
+    /** Saves the chart's current indicators under [name]; emits [BridgeEvent.IndicatorTemplateSaved]. */
+    data class CaptureIndicatorTemplate(val name: String) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "captureIndicatorTemplate")
+            put("payload", JSONObject().apply { put("name", name) })
+        }.toString()
+    }
+
+    /**
+     * Appends one drawing without disturbing the others — the receiving end of
+     * copy-to-all-charts.
+     *
+     * @param drawingJson The `drawingJson` from a [BridgeEvent.DrawingCreated].
+     *   Each chart that receives it gives its copy a fresh id, so dragging the
+     *   drawing in one pane leaves the others where they were.
+     */
+    data class AddDrawing(val drawingJson: String) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "addDrawing")
+            put("payload", JSONObject().apply {
+                putJson("drawing", drawingJson)
+            })
+        }.toString()
+    }
+
+    /**
+     * Chooses what the status line above the chart shows.
+     *
+     * @param statusLineJson e.g. `{"barChange":true,"volume":false}`. Merges —
+     *   fields you leave out keep whatever they are.
+     */
+    data class SetStatusLineSettings(val statusLineJson: String) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setStatusLineSettings")
+            put("payload", JSONObject().apply { putJson("statusLine", statusLineJson) })
+        }.toString()
+    }
+
+    /**
+     * Price- and time-axis options.
+     *
+     * @param scalesJson e.g.
+     *   `{"highLowLabels":true,"pricePrecision":4,"timezone":"Asia/Tokyo"}`. Merges.
+     */
+    data class SetScalesSettings(val scalesJson: String) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setScalesSettings")
+            put("payload", JSONObject().apply { putJson("scales", scalesJson) })
+        }.toString()
+    }
+
+    /**
+     * Grid, watermark and crosshair options. Colours stay in [SetCanvasColors].
+     *
+     * @param canvasJson e.g. `{"gridVertical":false,"watermarkVisible":true}`. Merges.
+     */
+    data class SetCanvasOptions(val canvasJson: String) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setCanvasOptions")
+            put("payload", JSONObject().apply { putJson("canvas", canvasJson) })
+        }.toString()
+    }
+
+    /**
+     * Whether a bar is "up" against its own open or the previous bar's close.
+     *
+     * @param source `"open"` or `"previousClose"`.
+     */
+    data class SetBarColorSource(val source: String) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setBarColorSource")
+            put("payload", JSONObject().apply { put("source", source) })
+        }.toString()
+    }
+
+    /**
+     * Fixes the decimal places for every price the chart writes.
+     *
+     * @param digits 0–8, or null to infer them from the feed again. Display
+     *   only — it does not change pip size, which comes from the instrument.
+     */
+    data class SetPricePrecision(val digits: Int?) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setPricePrecision")
+            put("payload", JSONObject().apply {
+                if (digits == null) put("digits", JSONObject.NULL) else put("digits", digits)
+            })
+        }.toString()
+    }
+
+    /**
+     * Switches the price axis between regular, logarithmic and percent.
+     *
+     * @param mode `"normal"`, `"log"` or `"percent"`. Log maps equal ratios to
+     *   equal height; it is unavailable on data that reaches zero or below and
+     *   maps linearly there rather than refusing to draw.
+     */
+    data class SetPriceScaleMode(val mode: String) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setPriceScaleMode")
+            put("payload", JSONObject().apply { put("mode", mode) })
+        }.toString()
+    }
+
+    /**
+     * Turns automatic Y-range fitting on or off. Switching it off freezes
+     * whatever is on screen, so the chart does not jump as it stops moving.
+     */
+    data class SetAutoScale(val enabled: Boolean) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setAutoScale")
+            put("payload", JSONObject().apply { put("enabled", enabled) })
+        }.toString()
+    }
+
+    /**
+     * Scrolls the chart to a date, centring the nearest bar.
+     *
+     * @param date ISO 8601 (`"2024-03-01"`) or unix ms as a string. Nearest,
+     *   not exact: the date asked for is often a weekend or a holiday, and
+     *   landing beside it beats not moving.
+     */
+    data class GoToDate(val date: String) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "goToDate")
+            put("payload", JSONObject().apply { put("date", date) })
+        }.toString()
+    }
+
+    /** Shows or hides the docked Data Window / Objects panel. */
+    data class SetSidePanelVisible(val visible: Boolean) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setSidePanelVisible")
+            put("payload", JSONObject().apply { put("visible", visible) })
+        }.toString()
+    }
+
+    /** Switches the panel. [tab] is `"data"` or `"objects"`. */
+    data class SetSidePanelTab(val tab: String) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setSidePanelTab")
+            put("payload", JSONObject().apply { put("tab", tab) })
+        }.toString()
+    }
+
+    /** Shows or hides one drawing. Hiding the selected one deselects it. */
+    data class SetDrawingVisible(val id: String, val visible: Boolean) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setDrawingVisible")
+            put("payload", JSONObject().apply { put("id", id); put("visible", visible) })
+        }.toString()
+    }
+
+    /** Locks or unlocks one drawing. Locking the selected one deselects it. */
+    data class SetDrawingLocked(val id: String, val locked: Boolean) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setDrawingLocked")
+            put("payload", JSONObject().apply { put("id", id); put("locked", locked) })
+        }.toString()
+    }
+
+    /** Deletes one drawing by id, whether or not it is selected. */
+    data class DeleteDrawing(val id: String) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "deleteDrawing")
+            put("payload", JSONObject().apply { put("id", id) })
+        }.toString()
+    }
+
+    /** Selects a drawing by id. Pass null to clear the selection. */
+    data class SelectDrawing(val id: String?) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "selectDrawing")
+            put("payload", JSONObject().apply {
+                if (id == null) put("id", JSONObject.NULL) else put("id", id)
+            })
+        }.toString()
+    }
+
+    /** Replaces the chart's indicators with a template's. [id] accepts the id or the name. */
+    data class ApplyIndicatorTemplate(val id: String) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "applyIndicatorTemplate")
+            put("payload", JSONObject().apply { put("id", id) })
+        }.toString()
+    }
+
+    /** Removes a template from the flyout. Also delete it from your own storage. */
+    data class DeleteIndicatorTemplate(val id: String) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "deleteIndicatorTemplate")
+            put("payload", JSONObject().apply { put("id", id) })
+        }.toString()
+    }
+
+    // ── Chart-settings templates ──────────────────────────────────────────────
+
+    /** Replaces the templates listed in the Chart Settings dialog. */
+    data class SetSettingsTemplates(val templatesJson: String) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setSettingsTemplates")
+            put("payload", JSONObject().apply { putJsonArray("templates", templatesJson) })
+        }.toString()
+    }
+
+    /** Saves the chart's current settings under [name]; emits [BridgeEvent.SettingsTemplateSaved]. */
+    data class CaptureSettingsTemplate(val name: String) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "captureSettingsTemplate")
+            put("payload", JSONObject().apply { put("name", name) })
+        }.toString()
+    }
+
+    /** Applies a saved settings template. [id] accepts the id or the name. */
+    data class ApplySettingsTemplate(val id: String) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "applySettingsTemplate")
+            put("payload", JSONObject().apply { put("id", id) })
+        }.toString()
+    }
+
+    /** Removes a settings template. Also delete it from your own storage. */
+    data class DeleteSettingsTemplate(val id: String) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "deleteSettingsTemplate")
+            put("payload", JSONObject().apply { put("id", id) })
+        }.toString()
+    }
+
+    /**
+     * Applies a settings snapshot straight to this chart — the "Apply to all charts"
+     * fan-out, sent once per other pane.
+     *
+     * @param settingsJson The `settings` object from [BridgeEvent.ChartSettingsApplied].
+     */
+    data class ApplyChartSettings(val settingsJson: String) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "applyChartSettings")
+            put("payload", JSONObject().apply { putJson("settings", settingsJson) })
+        }.toString()
+    }
+
+    // ── Saved layouts ─────────────────────────────────────────────────────────
+
+    /** Replaces the layouts listed in the layout popover. */
+    data class SetSavedLayouts(val layoutsJson: String) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setSavedLayouts")
+            put("payload", JSONObject().apply { putJsonArray("layouts", layoutsJson) })
+        }.toString()
+    }
+
+    /**
+     * Saves the current preset and this chart's state under [name]; emits
+     * [BridgeEvent.LayoutSaved].
+     *
+     * @param paneId Identifies this chart within the layout. Leave at `"main"` for a
+     *   single-chart screen; pass a distinct id per pane in a multi-pane grid so each
+     *   pane's state is restored into the right place.
+     */
+    data class CaptureSavedLayout(
+        val name: String,
+        val paneId: String = "main",
+    ) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "captureSavedLayout")
+            put("payload", JSONObject().apply {
+                put("name", name)
+                put("paneId", paneId)
+            })
+        }.toString()
+    }
+
+    /** Restores a saved layout into this chart. [id] accepts the id or the name. */
+    data class ApplySavedLayout(
+        val id: String,
+        val paneId: String = "main",
+    ) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "applySavedLayout")
+            put("payload", JSONObject().apply {
+                put("id", id)
+                put("paneId", paneId)
+            })
+        }.toString()
+    }
+
+    /** Removes a saved layout. Also delete it from your own storage. */
+    data class DeleteSavedLayout(val id: String) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "deleteSavedLayout")
+            put("payload", JSONObject().apply { put("id", id) })
+        }.toString()
+    }
+
+    /**
+     * Selects a grid preset. Emits [BridgeEvent.LayoutChange]; mounting the panes
+     * stays your app's job — the chart owns only the picker.
+     */
+    data class SetLayoutPreset(val presetId: String) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setLayoutPreset")
+            put("payload", JSONObject().apply { put("presetId", presetId) })
+        }.toString()
+    }
+
+    // ── Quick Search ──────────────────────────────────────────────────────────
+
+    /**
+     * Opens the command palette. The usual entry point on Android, where the web's
+     * Ctrl/⌘+K and `/` shortcuts don't exist — wire it to a toolbar item.
+     * Requires `enableQuickSearch` in [Init].
+     */
+    object OpenQuickSearch : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "openQuickSearch")
+            put("payload", JSONObject())
+        }.toString()
+    }
+
+    /** Closes the command palette. Useful from a back-press handler. */
+    object CloseQuickSearch : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "closeQuickSearch")
+            put("payload", JSONObject())
+        }.toString()
+    }
+
+    // ── Chart types ───────────────────────────────────────────────────────────
+
+    /**
+     * Retunes the price-transform chart types — Renko, Line Break, Kagi and
+     * Point & Figure.
+     *
+     * Merged over the current options, so `{"renko":{...}}` leaves Kagi and P&F
+     * alone. Takes effect immediately when one of those series is showing.
+     *
+     * The chart *type* is still chosen with [SetSeries]: `"hlc"`, `"renko"`,
+     * `"linebreak"`, `"kagi"` and `"pointfigure"` are simply new values of the
+     * same series string.
+     *
+     * @param optionsJson e.g. `{"renko":{"boxSize":{"kind":"atr","length":20}}}`
+     */
+    data class SetSeriesOptions(val optionsJson: String) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setSeriesOptions")
+            put("payload", JSONObject().apply { putJson("options", optionsJson) })
+        }.toString()
+    }
+
+    // ── Cursors ───────────────────────────────────────────────────────────────
+
+    /**
+     * Switches pointer behaviour over the plot.
+     *
+     * Independent of the drawing tool — switching mode never cancels a drawing in
+     * progress. Replies with [BridgeEvent.CursorModeChange].
+     *
+     * @param mode `"cross"`, `"dot"`, `"arrow"`, `"demonstration"` or `"eraser"`.
+     */
+    data class SetCursorMode(val mode: String) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setCursorMode")
+            put("payload", JSONObject().apply { put("mode", mode) })
+        }.toString()
+    }
+
+    // ── Drawing toolbar options ───────────────────────────────────────────────
+
+    /** Snaps drawing points to the nearest OHLC of the bar under the cursor. */
+    data class SetMagnetMode(val enabled: Boolean) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setMagnetMode")
+            put("payload", JSONObject().apply { put("enabled", enabled) })
+        }.toString()
+    }
+
+    /** Keeps the active tool armed after each drawing, for placing a series. */
+    data class SetKeepDrawingMode(val enabled: Boolean) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setKeepDrawingMode")
+            put("payload", JSONObject().apply { put("enabled", enabled) })
+        }.toString()
+    }
+
+    /** Announces new drawings via [BridgeEvent.DrawingCreated] for layout-wide replication. */
+    data class SetCopyDrawingsToAllCharts(val enabled: Boolean) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setCopyDrawingsToAllCharts")
+            put("payload", JSONObject().apply { put("enabled", enabled) })
+        }.toString()
+    }
+
+    /** Shows or hides the drawing toolbar at runtime. */
+    data class SetDrawingToolbarVisible(val visible: Boolean) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setDrawingToolbarVisible")
+            put("payload", JSONObject().apply { put("visible", visible) })
         }.toString()
     }
 }
