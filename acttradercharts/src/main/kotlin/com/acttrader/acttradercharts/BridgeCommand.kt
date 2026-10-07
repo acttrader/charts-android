@@ -606,6 +606,17 @@ sealed class BridgeCommand {
     // ── State ─────────────────────────────────────────────────────────────────
 
     /** Requests the current chart state; fires a `stateSnapshot` event in response. */
+    /**
+     * Asks the chart to send the native-UI catalog again ([BridgeEvent.Catalog]). The chart
+     * already sends it once after every init; use this to refresh a cached copy. Works before init.
+     */
+    object GetCatalog : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "getCatalog")
+            put("payload", JSONObject())
+        }.toString()
+    }
+
     object GetState : BridgeCommand() {
         override fun toJson(): String = JSONObject().apply {
             put("type", "getState")

@@ -35,6 +35,7 @@ import androidx.compose.ui.viewinterop.AndroidView
  * @param onDurationChange Invoked when the active duration changes.
  * @param onStateChange    Invoked on any chart state mutation.
  * @param onStateSnapshot  Invoked in response to [ActtraderChartsView.getState].
+ * @param onCatalog        Invoked with the native-UI catalog after init and on [ActtraderChartsView.getCatalog].
  * @param onDataLoaded     Invoked after [ActtraderChartsView.loadData] completes.
  * @param onNewBar         Invoked when a new bar is appended at the live edge.
  * @param onStreamStatus   Invoked when the stream connection status changes.
@@ -55,6 +56,7 @@ fun ActtraderChart(
     onDurationChange: ((BridgeEvent.DurationChange) -> Unit)? = null,
     onStateChange: ((BridgeEvent.StateChange) -> Unit)? = null,
     onStateSnapshot: ((BridgeEvent.StateSnapshot) -> Unit)? = null,
+    onCatalog: ((BridgeEvent.Catalog) -> Unit)? = null,
     onDataLoaded: ((BridgeEvent.DataLoaded) -> Unit)? = null,
     onNewBar: ((BridgeEvent.NewBar) -> Unit)? = null,
     onStreamStatus: ((BridgeEvent.StreamStatus) -> Unit)? = null,
@@ -83,6 +85,7 @@ fun ActtraderChart(
                 view.onDurationChange = onDurationChange
                 view.onStateChange    = onStateChange
                 view.onStateSnapshot  = onStateSnapshot
+                view.onCatalog        = onCatalog
                 view.onDataLoaded     = onDataLoaded
                 view.onNewBar         = onNewBar
                 view.onStreamStatus   = onStreamStatus
@@ -103,6 +106,7 @@ fun ActtraderChart(
             view.onDurationChange = onDurationChange
             view.onStateChange    = onStateChange
             view.onStateSnapshot  = onStateSnapshot
+            view.onCatalog        = onCatalog
             view.onDataLoaded     = onDataLoaded
             view.onNewBar         = onNewBar
             view.onStreamStatus   = onStreamStatus

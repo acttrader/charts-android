@@ -58,6 +58,19 @@ sealed class BridgeEvent {
     /** Response to a `GetState` command; contains the full serialised state. */
     data class StateSnapshot(val stateJson: String) : BridgeEvent()
 
+    /**
+     * The native-UI catalog: everything the app needs to build its own header, chart-type list,
+     * drawing-tools sheet, indicators list and chart-settings screen — ids, labels, defaults,
+     * indicator settings fields, and `available` per entry (true = works in this chart version).
+     * Sent once after every init and on [BridgeCommand.GetCatalog].
+     *
+     * @param catalogVersion the chart library version the catalog belongs to — cache the JSON
+     *                       and rebuild your UI only when this changes.
+     * @param catalogJson    the whole catalog as a raw JSON string (store it as-is, parse with
+     *                       your own models / Gson / kotlinx.serialization).
+     */
+    data class Catalog(val catalogVersion: String, val catalogJson: String) : BridgeEvent()
+
     /** `loadData` command completed successfully. */
     data class DataLoaded(val barCount: Int) : BridgeEvent()
 
@@ -431,6 +444,11 @@ object BridgeEventParser {
             "stateChange" -> BridgeEvent.StateChange(p.getJSONObject("state").toString())
 
             "stateSnapshot" -> BridgeEvent.StateSnapshot(p.toString())
+
+            "catalog" -> BridgeEvent.Catalog(
+                catalogVersion = p.optString("catalogVersion", ""),
+                catalogJson    = p.toString(),
+            )
 
             "dataLoaded" -> BridgeEvent.DataLoaded(p.optInt("barCount", 0))
 

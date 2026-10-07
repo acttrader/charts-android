@@ -132,6 +132,14 @@ class ActtraderChartsView @JvmOverloads constructor(
     /** Called in response to [getState]; contains the full serialised state JSON. */
     var onStateSnapshot: ((BridgeEvent.StateSnapshot) -> Unit)? = null
 
+    /**
+     * Called with the native-UI catalog once after every [init] (and on [getCatalog]).
+     * Save `event.catalogJson` keyed by `event.catalogVersion` and build the native header,
+     * tools and settings screens from it — entries with `"available": false` are planned
+     * features you can hide.
+     */
+    var onCatalog: ((BridgeEvent.Catalog) -> Unit)? = null
+
     /** Called after [loadData] completes. */
     var onDataLoaded: ((BridgeEvent.DataLoaded) -> Unit)? = null
 
@@ -342,6 +350,7 @@ class ActtraderChartsView @JvmOverloads constructor(
             is BridgeEvent.DurationChange -> onDurationChange?.invoke(event)
             is BridgeEvent.StateChange -> onStateChange?.invoke(event)
             is BridgeEvent.StateSnapshot -> onStateSnapshot?.invoke(event)
+            is BridgeEvent.Catalog -> onCatalog?.invoke(event)
             is BridgeEvent.DataLoaded -> onDataLoaded?.invoke(event)
             is BridgeEvent.NewBar -> onNewBar?.invoke(event)
             is BridgeEvent.StreamStatus -> onStreamStatus?.invoke(event)
@@ -822,6 +831,12 @@ class ActtraderChartsView @JvmOverloads constructor(
      * The result is delivered asynchronously via [onStateSnapshot].
      */
     fun getState() = sendCommand(BridgeCommand.GetState)
+
+    /**
+     * Asks the chart to send the native-UI catalog again; it arrives in [onCatalog].
+     * Not needed on start-up — the chart sends it automatically after [init].
+     */
+    fun getCatalog() = sendCommand(BridgeCommand.GetCatalog)
 
     /**
      * Restores a previously captured chart state.
