@@ -386,6 +386,34 @@ class ActtraderChartsView @JvmOverloads constructor(
             is BridgeEvent.IndicatorAdded      -> onIndicatorAdded?.invoke(event)
             is BridgeEvent.IndicatorRemoved    -> onIndicatorRemoved?.invoke(event)
             is BridgeEvent.Error               -> onError?.invoke(event)
+            // No typed callback yet — these reach the host through [onBridgeEvent] above.
+            is BridgeEvent.AutoScaleChange,
+            is BridgeEvent.BarColorSourceChange,
+            is BridgeEvent.CanvasOptionsChange,
+            is BridgeEvent.ChartSettingsApplied,
+            is BridgeEvent.CopyDrawingsToAllChange,
+            is BridgeEvent.CursorModeChange,
+            is BridgeEvent.DrawingCreated,
+            is BridgeEvent.DrawingToolbarVisibility,
+            is BridgeEvent.GoToDate,
+            is BridgeEvent.IndicatorTemplateApplied,
+            is BridgeEvent.IndicatorTemplateDeleted,
+            is BridgeEvent.IndicatorTemplateSaved,
+            is BridgeEvent.KeepDrawingModeChange,
+            is BridgeEvent.LayoutApplied,
+            is BridgeEvent.LayoutDeleted,
+            is BridgeEvent.LayoutSaved,
+            is BridgeEvent.MagnetModeChange,
+            is BridgeEvent.PricePrecisionChange,
+            is BridgeEvent.PriceScaleModeChange,
+            is BridgeEvent.QuickSearchCommand,
+            is BridgeEvent.ScalesChange,
+            is BridgeEvent.SettingsTemplateApplied,
+            is BridgeEvent.SettingsTemplateDeleted,
+            is BridgeEvent.SettingsTemplateSaved,
+            is BridgeEvent.SidePanelVisibility,
+            is BridgeEvent.StatusLineChange,
+            is BridgeEvent.TimezoneChange -> Unit
         }
     }
 
