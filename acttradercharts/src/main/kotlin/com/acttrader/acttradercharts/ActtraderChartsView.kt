@@ -617,6 +617,63 @@ class ActtraderChartsView @JvmOverloads constructor(
          */
         revealNewBrackets: Boolean? = null,
         /**
+         * Shows the Templates block at the foot of the indicators flyout — named,
+         * reusable indicator sets. No new header button. The chart persists nothing:
+         * it emits [BridgeEvent.IndicatorTemplateSaved] and your app stores the
+         * template. Default: `false`.
+         */
+        enableIndicatorTemplates: Boolean? = null,
+        /** Indicator templates to list at init — a JSON array, typically what you stored. */
+        indicatorTemplatesJson: String? = null,
+        /**
+         * Shows the Templates row and the "Apply to all charts" switch in the Chart
+         * Settings dialog. Default: `false`.
+         */
+        enableSettingsTemplates: Boolean? = null,
+        /** Settings templates to list at init — a JSON array. */
+        settingsTemplatesJson: String? = null,
+        /**
+         * Shows the Saved layouts section in the layout popover — a grid preset plus
+         * every pane's full state. Requires [enableMultipleLayouts]. Default: `false`.
+         */
+        enableSavedLayouts: Boolean? = null,
+        /** Saved layouts to list at init — a JSON array. */
+        savedLayoutsJson: String? = null,
+        /**
+         * Enables Quick Search, the command palette over everything the chart can do.
+         * Android has no Ctrl/⌘+K, so open it with [openQuickSearch]. Default: `false`.
+         */
+        enableQuickSearch: Boolean? = null,
+        /** Adds a search button to the header for [enableQuickSearch]. Default: `false`. */
+        quickSearchShowButton: Boolean? = null,
+        /**
+         * Box/reversal parameters for the price-transform chart types (Renko,
+         * Line Break, Kagi, Point & Figure) as a JSON object. Omit for ATR(14).
+         */
+        seriesOptionsJson: String? = null,
+        /** Initial pointer mode: `"cross"` (default), `"dot"`, `"arrow"`, `"demonstration"` or `"eraser"`. */
+        cursorMode: String? = null,
+        /** Show an OHLCV readout beside a long press. Default: `false`. */
+        valueTooltip: Boolean? = null,
+        /** Add the Cursors group to the top of the drawing toolbar. Default: `false`. */
+        enableCursorModes: Boolean? = null,
+        enableIconTools: Boolean? = null,
+        enableChartSettings: Boolean? = null,
+        statusLineJson: String? = null,
+        scalesJson: String? = null,
+        canvasJson: String? = null,
+        barColorSource: String? = null,
+        enableScaleControls: Boolean? = null,
+        priceScaleMode: String? = null,
+        autoScale: Boolean? = null,
+        enableSidePanels: Boolean? = null,
+        /** Snap drawing points to bar OHLC values. Default: `false`. */
+        magnetMode: Boolean? = null,
+        /** Keep the drawing tool armed after each drawing. Default: `false`. */
+        keepDrawingMode: Boolean? = null,
+        /** Announce new drawings for layout-wide replication. Default: `false`. */
+        copyDrawingsToAllCharts: Boolean? = null,
+        /**
          * Raw JSON string from a prior [onStateSnapshot] callback. When provided, the full chart state
          * (timeframe, series, indicators, drawings, etc.) is restored atomically alongside the init
          * command — both are evaluated in a single `evaluateJavascript` call, so there is no
@@ -676,6 +733,31 @@ class ActtraderChartsView @JvmOverloads constructor(
         orderLineAnchorPersistence = orderLineAnchorPersistence,
         orderLineDefaultAnchor = orderLineDefaultAnchor,
         revealNewBrackets = revealNewBrackets,
+        enableIndicatorTemplates = enableIndicatorTemplates,
+        indicatorTemplatesJson = indicatorTemplatesJson,
+        enableSettingsTemplates = enableSettingsTemplates,
+        settingsTemplatesJson = settingsTemplatesJson,
+        enableSavedLayouts = enableSavedLayouts,
+        savedLayoutsJson = savedLayoutsJson,
+        enableQuickSearch = enableQuickSearch,
+        quickSearchShowButton = quickSearchShowButton,
+        seriesOptionsJson = seriesOptionsJson,
+        cursorMode = cursorMode,
+        valueTooltip = valueTooltip,
+        enableCursorModes = enableCursorModes,
+        enableIconTools = enableIconTools,
+        enableChartSettings = enableChartSettings,
+        statusLineJson = statusLineJson,
+        scalesJson = scalesJson,
+        canvasJson = canvasJson,
+        barColorSource = barColorSource,
+        enableScaleControls = enableScaleControls,
+        priceScaleMode = priceScaleMode,
+        autoScale = autoScale,
+        enableSidePanels = enableSidePanels,
+        magnetMode = magnetMode,
+        keepDrawingMode = keepDrawingMode,
+        copyDrawingsToAllCharts = copyDrawingsToAllCharts,
         )
         if (stateJson == null) {
             sendCommand(initCmd)
@@ -806,6 +888,72 @@ class ActtraderChartsView @JvmOverloads constructor(
     /** Removes all drawings from the chart. */
     fun clearAllDrawings() = sendCommand(BridgeCommand.ClearAllDrawings)
 
+    /** Chooses what the status line shows, e.g. `{"barChange":true}`. Merges. */
+    fun setStatusLineSettings(statusLineJson: String) =
+        sendCommand(BridgeCommand.SetStatusLineSettings(statusLineJson))
+
+    /** Price/time axis options, e.g. `{"timezone":"Asia/Tokyo"}`. Merges. */
+    fun setScalesSettings(scalesJson: String) =
+        sendCommand(BridgeCommand.SetScalesSettings(scalesJson))
+
+    /** Grid, watermark and crosshair options, e.g. `{"gridVertical":false}`. Merges. */
+    fun setCanvasOptions(canvasJson: String) =
+        sendCommand(BridgeCommand.SetCanvasOptions(canvasJson))
+
+    /** `"open"` (default) or `"previousClose"` bar colouring. */
+    fun setBarColorSource(source: String) =
+        sendCommand(BridgeCommand.SetBarColorSource(source))
+
+    /** Decimal places for prices; null re-infers them from the feed. */
+    fun setPricePrecision(digits: Int?) =
+        sendCommand(BridgeCommand.SetPricePrecision(digits))
+
+    /** `"normal"` (default), `"log"` or `"percent"` price axis. */
+    fun setPriceScaleMode(mode: String) =
+        sendCommand(BridgeCommand.SetPriceScaleMode(mode))
+
+    /** Turns automatic Y-range fitting on or off. */
+    fun setAutoScale(enabled: Boolean) =
+        sendCommand(BridgeCommand.SetAutoScale(enabled))
+
+    /** Scrolls to a date, centring the nearest bar. ISO 8601 or unix ms. */
+    fun goToDate(date: String) =
+        sendCommand(BridgeCommand.GoToDate(date))
+
+    /** Shows or hides the docked Data Window / Objects panel. */
+    fun setSidePanelVisible(visible: Boolean) =
+        sendCommand(BridgeCommand.SetSidePanelVisible(visible))
+
+    /** Switches the panel. [tab] is `"data"` or `"objects"`. */
+    fun setSidePanelTab(tab: String) =
+        sendCommand(BridgeCommand.SetSidePanelTab(tab))
+
+    /** Shows or hides one drawing by id. */
+    fun setDrawingVisible(id: String, visible: Boolean) =
+        sendCommand(BridgeCommand.SetDrawingVisible(id, visible))
+
+    /** Locks or unlocks one drawing by id. */
+    fun setDrawingLocked(id: String, locked: Boolean) =
+        sendCommand(BridgeCommand.SetDrawingLocked(id, locked))
+
+    /** Deletes one drawing by id. */
+    fun deleteDrawing(id: String) =
+        sendCommand(BridgeCommand.DeleteDrawing(id))
+
+    /** Selects a drawing by id; null clears the selection. */
+    fun selectDrawing(id: String?) =
+        sendCommand(BridgeCommand.SelectDrawing(id))
+
+    /**
+     * Appends one drawing, leaving the existing ones alone.
+     *
+     * This is how copy-to-all-charts lands: the chart the user drew on emits
+     * [BridgeEvent.DrawingCreated], and you forward its `drawingJson` to every
+     * other chart view in the layout. The chart cannot do this itself — only
+     * your app knows which panes exist.
+     */
+    fun addDrawing(drawingJson: String) = sendCommand(BridgeCommand.AddDrawing(drawingJson))
+
     /** Updates the displayed symbol name in the chart's top bar. */
     fun setSymbol(symbol: String) = sendCommand(BridgeCommand.SetSymbol(symbol))
 
@@ -875,6 +1023,156 @@ class ActtraderChartsView @JvmOverloads constructor(
      */
     fun resolveCompareDataRequest(requestId: String, bars: List<OHLCVBar>) =
         sendCommand(BridgeCommand.ResolveCompareDataRequest(requestId, bars))
+
+    // ── Snapshot ──────────────────────────────────────────────────────────────
+
+    /**
+     * Captures the chart without the user opening the snapshot popover.
+     *
+     * The PNG arrives on [BridgeEvent.Snapshot] as a `data:` URL — decode it and
+     * save or share it yourself; the in-WebView browser download does not work on
+     * Android. Requires `enableSnapshot` in the init command.
+     */
+    fun requestSnapshot(action: String = "download") =
+        sendCommand(BridgeCommand.RequestSnapshot(action))
+
+    // ── Indicator templates ───────────────────────────────────────────────────
+
+    /**
+     * Replaces the templates listed in the indicators flyout.
+     *
+     * @param templatesJson A JSON array of templates — the ones your app stored
+     *   from [BridgeEvent.IndicatorTemplateSaved].
+     */
+    fun setIndicatorTemplates(templatesJson: String) =
+        sendCommand(BridgeCommand.SetIndicatorTemplates(templatesJson))
+
+    /** Saves the chart's current indicators; replies on [BridgeEvent.IndicatorTemplateSaved]. */
+    fun captureIndicatorTemplate(name: String) =
+        sendCommand(BridgeCommand.CaptureIndicatorTemplate(name))
+
+    /** Replaces the chart's indicators with a template's. Accepts the id or the name. */
+    fun applyIndicatorTemplate(id: String) =
+        sendCommand(BridgeCommand.ApplyIndicatorTemplate(id))
+
+    /** Removes a template from the flyout. Delete it from your storage too. */
+    fun deleteIndicatorTemplate(id: String) =
+        sendCommand(BridgeCommand.DeleteIndicatorTemplate(id))
+
+    // ── Chart-settings templates ──────────────────────────────────────────────
+
+    /** Replaces the templates listed in the Chart Settings dialog. */
+    fun setSettingsTemplates(templatesJson: String) =
+        sendCommand(BridgeCommand.SetSettingsTemplates(templatesJson))
+
+    /** Saves the chart's current settings; replies on [BridgeEvent.SettingsTemplateSaved]. */
+    fun captureSettingsTemplate(name: String) =
+        sendCommand(BridgeCommand.CaptureSettingsTemplate(name))
+
+    /** Applies a saved settings template. Accepts the id or the name. */
+    fun applySettingsTemplate(id: String) =
+        sendCommand(BridgeCommand.ApplySettingsTemplate(id))
+
+    /** Removes a settings template. Delete it from your storage too. */
+    fun deleteSettingsTemplate(id: String) =
+        sendCommand(BridgeCommand.DeleteSettingsTemplate(id))
+
+    /**
+     * Applies a settings snapshot to this chart.
+     *
+     * This is the "Apply to all charts" fan-out: when
+     * [BridgeEvent.ChartSettingsApplied] arrives with `applyToAll == true`, pass its
+     * `settingsJson` to every other chart view you have mounted.
+     */
+    fun applyChartSettings(settingsJson: String) =
+        sendCommand(BridgeCommand.ApplyChartSettings(settingsJson))
+
+    // ── Saved layouts ─────────────────────────────────────────────────────────
+
+    /** Replaces the layouts listed in the layout popover. */
+    fun setSavedLayouts(layoutsJson: String) =
+        sendCommand(BridgeCommand.SetSavedLayouts(layoutsJson))
+
+    /**
+     * Saves the current preset and this chart's state; replies on [BridgeEvent.LayoutSaved].
+     *
+     * @param paneId Identifies this chart within the layout — leave at `"main"` for a
+     *   single-chart screen, pass a distinct id per pane in a grid.
+     */
+    fun captureSavedLayout(name: String, paneId: String = "main") =
+        sendCommand(BridgeCommand.CaptureSavedLayout(name, paneId))
+
+    /** Restores a saved layout into this chart. Accepts the id or the name. */
+    fun applySavedLayout(id: String, paneId: String = "main") =
+        sendCommand(BridgeCommand.ApplySavedLayout(id, paneId))
+
+    /** Removes a saved layout. Delete it from your storage too. */
+    fun deleteSavedLayout(id: String) = sendCommand(BridgeCommand.DeleteSavedLayout(id))
+
+    /**
+     * Selects a grid preset. Emits [BridgeEvent.LayoutChange]; mounting the panes
+     * stays your app's job.
+     */
+    fun setLayoutPreset(presetId: String) = sendCommand(BridgeCommand.SetLayoutPreset(presetId))
+
+    // ── Drawing toolbar options ───────────────────────────────────────────────
+
+    /** Snaps drawing points to the nearest OHLC of the bar under the cursor. */
+    fun setMagnetMode(enabled: Boolean) = sendCommand(BridgeCommand.SetMagnetMode(enabled))
+
+    /** Keeps the active tool armed after each drawing, for placing a series. */
+    fun setKeepDrawingMode(enabled: Boolean) = sendCommand(BridgeCommand.SetKeepDrawingMode(enabled))
+
+    /**
+     * Announces new drawings via [BridgeEvent.DrawingCreated] so your app can
+     * replicate them across the other panes of a layout.
+     */
+    fun setCopyDrawingsToAllCharts(enabled: Boolean) =
+        sendCommand(BridgeCommand.SetCopyDrawingsToAllCharts(enabled))
+
+    /** Shows or hides the drawing toolbar at runtime. */
+    fun setDrawingToolbarVisible(visible: Boolean) =
+        sendCommand(BridgeCommand.SetDrawingToolbarVisible(visible))
+
+    // ── Cursors ───────────────────────────────────────────────────────────────
+
+    /**
+     * Switches pointer behaviour over the plot.
+     *
+     * Independent of the drawing tool — switching mode never cancels a drawing in
+     * progress. Replies with [BridgeEvent.CursorModeChange].
+     *
+     * @param mode `"cross"`, `"dot"`, `"arrow"`, `"demonstration"` or `"eraser"`.
+     */
+    fun setCursorMode(mode: String) = sendCommand(BridgeCommand.SetCursorMode(mode))
+
+    // ── Chart types ───────────────────────────────────────────────────────────
+
+    /**
+     * Retunes the price-transform chart types — Renko, Line Break, Kagi and
+     * Point & Figure.
+     *
+     * Merged over the current options, so one series can be retuned without
+     * disturbing the others. The chart *type* is still chosen with [setSeries]:
+     * `"hlc"`, `"renko"`, `"linebreak"`, `"kagi"` and `"pointfigure"` are new
+     * values of the same series string.
+     */
+    fun setSeriesOptions(optionsJson: String) =
+        sendCommand(BridgeCommand.SetSeriesOptions(optionsJson))
+
+    // ── Quick Search ──────────────────────────────────────────────────────────
+
+    /**
+     * Opens the command palette over everything the chart can do.
+     *
+     * The web build opens this with Ctrl/⌘+K or `/`; Android has neither, so this is
+     * the entry point — wire it to a toolbar item. Requires `enableQuickSearch` in
+     * the init command.
+     */
+    fun openQuickSearch() = sendCommand(BridgeCommand.OpenQuickSearch)
+
+    /** Closes the command palette. Useful from a back-press handler. */
+    fun closeQuickSearch() = sendCommand(BridgeCommand.CloseQuickSearch)
 
     /**
      * Enables or disables verbose tick/render logging in the browser console.
