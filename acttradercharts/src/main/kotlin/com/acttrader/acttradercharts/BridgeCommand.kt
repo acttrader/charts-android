@@ -341,6 +341,8 @@ sealed class BridgeCommand {
         val priceScaleMode: String? = null,
         val autoScale: Boolean? = null,
         val enableSidePanels: Boolean? = null,
+        /** Bar Replay — the Replay button and its control strip. Default: `false`. */
+        val enableReplay: Boolean? = null,
         /** Snap drawing points to the nearest OHLC of the bar under the cursor. Default: `false`. */
         val magnetMode: Boolean? = null,
         /** Keep the drawing tool armed after each completed drawing. Default: `false`. */
@@ -491,6 +493,7 @@ sealed class BridgeCommand {
                 priceScaleMode?.let { put("priceScaleMode", it) }
                 autoScale?.let { put("autoScale", it) }
                 enableSidePanels?.let { put("enableSidePanels", it) }
+                enableReplay?.let { put("enableReplay", it) }
                 magnetMode?.let { put("magnetMode", it) }
                 keepDrawingMode?.let { put("keepDrawingMode", it) }
                 copyDrawingsToAllCharts?.let { put("copyDrawingsToAllCharts", it) }
@@ -1612,6 +1615,75 @@ sealed class BridgeCommand {
     }
 
     // ── Quick Search ──────────────────────────────────────────────────────────
+
+    // ── Bar Replay ───────────────────────────────────────────────────────────
+
+    /** Opens the Bar Replay strip and arms "Select bar". Requires `enableReplay` in [Init]. */
+    object OpenReplay : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "openReplay")
+            put("payload", JSONObject())
+        }.toString()
+    }
+
+    /** Leaves any running replay and closes the strip. */
+    object CloseReplay : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "closeReplay")
+            put("payload", JSONObject())
+        }.toString()
+    }
+
+    /**
+     * Starts a replay: bars after the last bar at or before [time] are hidden until
+     * revealed. [time] is unix milliseconds.
+     */
+    data class StartReplay(val time: Long) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "startReplay")
+            put("payload", JSONObject().apply { put("time", time) })
+        }.toString()
+    }
+
+    /** Reveals bars one by one at the replay speed. */
+    object PlayReplay : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "playReplay")
+            put("payload", JSONObject())
+        }.toString()
+    }
+
+    /** Pauses playback. */
+    object PauseReplay : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "pauseReplay")
+            put("payload", JSONObject())
+        }.toString()
+    }
+
+    /** Reveals the next hidden bar. */
+    object ReplayStepForward : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "replayStepForward")
+            put("payload", JSONObject())
+        }.toString()
+    }
+
+    /** Replay speed in bars per second (0.1 – 10). */
+    data class SetReplaySpeed(val barsPerSecond: Double) : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setReplaySpeed")
+            put("payload", JSONObject().apply { put("barsPerSecond", barsPerSecond) })
+        }.toString()
+    }
+
+    /** Ends the replay and shows the live chart again; the strip stays open. */
+    object ExitReplay : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "exitReplay")
+            put("payload", JSONObject())
+        }.toString()
+    }
 
     /**
      * Opens the command palette. The usual entry point on Android, where the web's
