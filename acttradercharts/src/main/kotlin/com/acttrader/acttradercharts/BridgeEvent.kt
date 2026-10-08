@@ -530,6 +530,22 @@ sealed class BridgeEvent {
     /** Bar Replay ended and the live chart is back. */
     object ReplayExit : BridgeEvent()
 
+    /**
+     * Two-finger measure (mobile): the user is holding two fingers on the chart.
+     * [phase] is `"start"`, `"update"` or `"end"`; times are unix ms; [change] is
+     * close-to-close, [changePercent] relative to the start close.
+     */
+    data class TwoFingerMeasure(
+        val phase: String,
+        val startTime: Long,
+        val endTime: Long,
+        val startClose: Double,
+        val endClose: Double,
+        val change: Double,
+        val changePercent: Double,
+        val bars: Int,
+    ) : BridgeEvent()
+
     /** The side panel was shown or hidden. [tab] is `"data"` or `"objects"`. */
     data class SidePanelVisibility(val visible: Boolean, val tab: String) : BridgeEvent()
 
@@ -926,6 +942,17 @@ object BridgeEventParser {
             "replayStep" -> BridgeEvent.ReplayStep(time = p.optLong("time", 0L))
             "replayEnd" -> BridgeEvent.ReplayEnd(time = p.optLong("time", 0L))
             "replayExit" -> BridgeEvent.ReplayExit
+
+            "twoFingerMeasure" -> BridgeEvent.TwoFingerMeasure(
+                phase = p.optString("phase", "update"),
+                startTime = p.optLong("startTime", 0L),
+                endTime = p.optLong("endTime", 0L),
+                startClose = p.optDouble("startClose", 0.0),
+                endClose = p.optDouble("endClose", 0.0),
+                change = p.optDouble("change", 0.0),
+                changePercent = p.optDouble("changePercent", 0.0),
+                bars = p.optInt("bars", 0),
+            )
 
             "sidePanelVisibility" -> BridgeEvent.SidePanelVisibility(
                 visible = p.optBoolean("visible", false),

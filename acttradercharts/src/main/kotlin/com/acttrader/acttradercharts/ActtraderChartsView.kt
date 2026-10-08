@@ -417,6 +417,7 @@ class ActtraderChartsView @JvmOverloads constructor(
             is BridgeEvent.ReplayStep,
             is BridgeEvent.ReplayEnd,
             is BridgeEvent.ReplayExit,
+            is BridgeEvent.TwoFingerMeasure,
             is BridgeEvent.TimezoneChange -> Unit
         }
     }
@@ -701,6 +702,8 @@ class ActtraderChartsView @JvmOverloads constructor(
         enableSidePanels: Boolean? = null,
         /** Bar Replay — the Replay button and its control strip. Default: `false`. */
         enableReplay: Boolean? = null,
+        /** Two-finger measure (mobile): hold two fingers to see the change between two bars. Default: `false`. */
+        enableTwoFingerMeasure: Boolean? = null,
         /** Snap drawing points to bar OHLC values. Default: `false`. */
         magnetMode: Boolean? = null,
         /** Keep the drawing tool armed after each drawing. Default: `false`. */
@@ -790,6 +793,7 @@ class ActtraderChartsView @JvmOverloads constructor(
         autoScale = autoScale,
         enableSidePanels = enableSidePanels,
         enableReplay = enableReplay,
+        enableTwoFingerMeasure = enableTwoFingerMeasure,
         magnetMode = magnetMode,
         keepDrawingMode = keepDrawingMode,
         copyDrawingsToAllCharts = copyDrawingsToAllCharts,

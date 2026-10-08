@@ -920,6 +920,26 @@ Two behaviours worth knowing:
   "fixed" means fixed *proportion*, not fixed size.
 
 
+## Two-finger measure (mobile)
+
+Hold two fingers on the chart and it shows what the TradingView app shows: the
+close and date under each finger and, between them, the change in price and
+percent, coloured by direction, with the range tinted. Moving the fingers moves
+the measurement; lifting either finger ends it. Pinch still zooms — the measure
+starts once both fingers have rested for about 0.3 s.
+
+```kotlin
+chart.init(enableTwoFingerMeasure = true)
+
+chart.onBridgeEvent = { e ->
+    when (e) {
+        is BridgeEvent.TwoFingerMeasure ->      // phase "start" / "update" / "end"
+            Log.d("Chart", "${e.phase}: ${e.change} (${e.changePercent}%) over ${e.bars} bars")
+        else -> Unit
+    }
+}
+```
+
 ## Bar Replay
 
 Replay history bar by bar, as TradingView does. `enableReplay = true` adds a
