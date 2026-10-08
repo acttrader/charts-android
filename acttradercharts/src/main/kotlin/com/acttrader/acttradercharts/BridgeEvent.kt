@@ -518,6 +518,18 @@ sealed class BridgeEvent {
     /** The chart scrolled to a date. Carries the bar it settled on. */
     data class GoToDate(val time: Long, val barIndex: Int) : BridgeEvent()
 
+    /** Bar Replay started (or restarted) at the bar with this open time (unix ms). */
+    data class ReplayStart(val time: Long) : BridgeEvent()
+
+    /** Bar Replay revealed the next bar. */
+    data class ReplayStep(val time: Long) : BridgeEvent()
+
+    /** Bar Replay revealed the last hidden bar. */
+    data class ReplayEnd(val time: Long) : BridgeEvent()
+
+    /** Bar Replay ended and the live chart is back. */
+    object ReplayExit : BridgeEvent()
+
     /** The side panel was shown or hidden. [tab] is `"data"` or `"objects"`. */
     data class SidePanelVisibility(val visible: Boolean, val tab: String) : BridgeEvent()
 
@@ -909,6 +921,11 @@ object BridgeEventParser {
                 time = p.optLong("time", 0L),
                 barIndex = p.optInt("barIndex", 0),
             )
+
+            "replayStart" -> BridgeEvent.ReplayStart(time = p.optLong("time", 0L))
+            "replayStep" -> BridgeEvent.ReplayStep(time = p.optLong("time", 0L))
+            "replayEnd" -> BridgeEvent.ReplayEnd(time = p.optLong("time", 0L))
+            "replayExit" -> BridgeEvent.ReplayExit
 
             "sidePanelVisibility" -> BridgeEvent.SidePanelVisibility(
                 visible = p.optBoolean("visible", false),

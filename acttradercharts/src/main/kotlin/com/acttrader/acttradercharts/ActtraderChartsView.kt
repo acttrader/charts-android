@@ -413,6 +413,10 @@ class ActtraderChartsView @JvmOverloads constructor(
             is BridgeEvent.SettingsTemplateSaved,
             is BridgeEvent.SidePanelVisibility,
             is BridgeEvent.StatusLineChange,
+            is BridgeEvent.ReplayStart,
+            is BridgeEvent.ReplayStep,
+            is BridgeEvent.ReplayEnd,
+            is BridgeEvent.ReplayExit,
             is BridgeEvent.TimezoneChange -> Unit
         }
     }
@@ -695,6 +699,8 @@ class ActtraderChartsView @JvmOverloads constructor(
         priceScaleMode: String? = null,
         autoScale: Boolean? = null,
         enableSidePanels: Boolean? = null,
+        /** Bar Replay — the Replay button and its control strip. Default: `false`. */
+        enableReplay: Boolean? = null,
         /** Snap drawing points to bar OHLC values. Default: `false`. */
         magnetMode: Boolean? = null,
         /** Keep the drawing tool armed after each drawing. Default: `false`. */
@@ -783,6 +789,7 @@ class ActtraderChartsView @JvmOverloads constructor(
         priceScaleMode = priceScaleMode,
         autoScale = autoScale,
         enableSidePanels = enableSidePanels,
+        enableReplay = enableReplay,
         magnetMode = magnetMode,
         keepDrawingMode = keepDrawingMode,
         copyDrawingsToAllCharts = copyDrawingsToAllCharts,
@@ -951,6 +958,32 @@ class ActtraderChartsView @JvmOverloads constructor(
     /** Shows or hides the docked Data Window / Objects panel. */
     fun setSidePanelVisible(visible: Boolean) =
         sendCommand(BridgeCommand.SetSidePanelVisible(visible))
+
+    // ── Bar Replay ───────────────────────────────────────────────────────────
+
+    /** Opens the Bar Replay strip and arms "Select bar". Requires `enableReplay` in [init]. */
+    fun openReplay() = sendCommand(BridgeCommand.OpenReplay)
+
+    /** Leaves any running replay and closes the strip. */
+    fun closeReplay() = sendCommand(BridgeCommand.CloseReplay)
+
+    /** Starts a replay at the last bar at or before [timeMs] (unix milliseconds). */
+    fun startReplay(timeMs: Long) = sendCommand(BridgeCommand.StartReplay(timeMs))
+
+    /** Reveals bars one by one at the replay speed. */
+    fun playReplay() = sendCommand(BridgeCommand.PlayReplay)
+
+    /** Pauses playback. */
+    fun pauseReplay() = sendCommand(BridgeCommand.PauseReplay)
+
+    /** Reveals the next hidden bar. */
+    fun replayStepForward() = sendCommand(BridgeCommand.ReplayStepForward)
+
+    /** Replay speed in bars per second (0.1 – 10). */
+    fun setReplaySpeed(barsPerSecond: Double) = sendCommand(BridgeCommand.SetReplaySpeed(barsPerSecond))
+
+    /** Ends the replay and shows the live chart again; the strip stays open. */
+    fun exitReplay() = sendCommand(BridgeCommand.ExitReplay)
 
     /** Switches the panel. [tab] is `"data"` or `"objects"`. */
     fun setSidePanelTab(tab: String) =
