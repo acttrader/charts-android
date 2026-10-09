@@ -343,6 +343,8 @@ sealed class BridgeCommand {
         val enableSidePanels: Boolean? = null,
         /** Bar Replay — the Replay button and its control strip. Default: `false`. */
         val enableReplay: Boolean? = null,
+        /** Two-finger measure (mobile): hold two fingers to see the change between two bars. Default: `false`. */
+        val enableTwoFingerMeasure: Boolean? = null,
         /** Snap drawing points to the nearest OHLC of the bar under the cursor. Default: `false`. */
         val magnetMode: Boolean? = null,
         /** Keep the drawing tool armed after each completed drawing. Default: `false`. */
@@ -494,6 +496,7 @@ sealed class BridgeCommand {
                 autoScale?.let { put("autoScale", it) }
                 enableSidePanels?.let { put("enableSidePanels", it) }
                 enableReplay?.let { put("enableReplay", it) }
+                enableTwoFingerMeasure?.let { put("enableTwoFingerMeasure", it) }
                 magnetMode?.let { put("magnetMode", it) }
                 keepDrawingMode?.let { put("keepDrawingMode", it) }
                 copyDrawingsToAllCharts?.let { put("copyDrawingsToAllCharts", it) }
