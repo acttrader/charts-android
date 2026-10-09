@@ -511,6 +511,30 @@ chart.onSnapshot = { evt ->
 }
 ```
 
+### Building a native layout picker
+
+Apps that draw their own header get every grid preset from the catalog
+(`onCatalog` / `getCatalog`, from chart 1.3.0-beta.31): `layouts.presets` lists
+the same presets the web popover shows — `id`, `label`, `count`, `cols`, `rows`,
+`areas` / `areaOrder` for the uneven shapes, and an inline-SVG `icon` — grouped
+by `layouts.counts`, plus `layouts.sync` with the five toggles and their
+defaults. The `layouts` toolbar entry says the chart accepts the pick.
+
+```kotlin
+chart.onCatalog = { e ->
+    val presets = JSONObject(e.catalogJson).getJSONObject("layouts").getJSONArray("presets")
+    // build the picker from presets[i].getString("id") / "label" / "count" / "icon"
+}
+
+chart.setLayoutPreset("4-2x2")        // → onLayoutChange with presetId = "4-2x2"
+chart.setLayoutSync(LayoutSync(interval = true))
+```
+
+The chart never splits itself: on `onLayoutChange` mount `count` sibling
+`ActtraderChartsView`s in a grid shaped by `cols` × `rows`. With
+`headerLayout = "mobile"` the chart's own header shows the Layout button and
+preset popover when `enableMultipleLayouts = true`.
+
 ### `headerLayout`
 
 | Value        | Use case
