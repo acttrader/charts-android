@@ -174,7 +174,7 @@ parentLayout.addView(chart)
 | `setSymbol(symbol)` | Update displayed symbol name |
 | `setInstrument(spec?)` | Contract specs used by the measurement tools — see [Instrument specs](#instrument-specs). Pair it with `setSymbol`; `null` clears them |
 | `setAccount(spec?)` | Account equity and per-trade risk used to size the position tools — see [Position tools](#position-tools). Push it whenever equity moves |
-| `addIndicator(name, params?)` | Add study (e.g. `"SMA"`, `"EMA"`, `"RSI"`, `"BB"`, `"MACD"`). Parameterized studies add a **new instance** per call (multiple EMAs etc.); listen to `onIndicatorAdded` for its `instanceId` |
+| `addIndicator(name, params?)` | Add study (e.g. `"SMA"`, `"EMA"`, `"RSI"`, `"BB"`, `"MACD"`). Parameterized studies add a **new instance** per call (multiple EMAs etc.); listen to `onIndicatorAdded` for its `instanceId` Values arriving from a host are normalised to the study's schema first: numeric strings (`"20"`), differently-cased select values (`"Close"`) and TradingView's `length` for `period` all resolve as the web does, so a native settings sheet draws the same line as the browser. |
 | `removeIndicator(name)` | Remove a study — pass an `instanceId` (e.g. `"EMA#3"`) for one instance, or a short name (e.g. `"EMA"`) for all instances of that study |
 | `setDrawingTool(tool?)` | Activate drawing tool (e.g. `"trend_line"`, `"horizontal_line"`), `null` to deactivate |
 | `clearAllDrawings()` | Remove all drawings |
@@ -715,6 +715,17 @@ is BridgeEvent.CanvasOptionsChange -> …
 
 ## Icons & drawing toolbar options
 
+### Trend Angle — `"trendAngle"`
+
+The angle label is the drawing's own property, not a reading of the two points
+on this particular screen. It is measured when the user places or drags a point,
+held while zooming, and saved as `angle` (degrees from the horizontal) in the
+drawing JSON that `stateChange` carries — so a drawing made on the web shows the
+same degrees on an Android phone, whose candle width and pane height would
+otherwise give a different on-screen angle. Drawings saved before this field
+existed are measured once on their next render and then keep that value. Nothing
+to configure on the native side; pass drawings through as before.
+
 ### Icons, emojis & stickers — `"icon"`
 
 A glyph placed at a bar and price, behind the `enableIconTools` init flag.
@@ -1053,6 +1064,12 @@ the finger — the user has to look away from what they are pointing at.
 It flips to the other side of the touch rather than running off an edge, never
 takes touch events (the drag is still in progress), and omits volume rather than
 printing a zero when the feed carries none. Default `false`.
+
+The crosshair itself is on by default (`crosshairEnabled`, since v1.3.0-beta.20) and
+appears after a 500 ms long press on the chart. The chart claims that touch so the
+WebView's own long-press gesture cannot cancel it — on iOS, WebKit's text-selection /
+callout recogniser used to end the touch at the same moment and the crosshair never
+showed; a cancel that still arrives after 300 ms of holding now counts as the press.
 
 ### Persisting the choice
 
