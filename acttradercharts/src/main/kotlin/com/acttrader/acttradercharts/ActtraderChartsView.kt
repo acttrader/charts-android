@@ -312,6 +312,9 @@ class ActtraderChartsView @JvmOverloads constructor(
     /** Called when a study instance is removed (pill ×, settings dialog, or [removeIndicator]). */
     var onIndicatorRemoved: ((BridgeEvent.IndicatorRemoved) -> Unit)? = null
 
+    /** Called when a study is refused because all `maxSubPanes` sub-pane slots are in use. */
+    var onIndicatorLimitReached: ((BridgeEvent.IndicatorLimitReached) -> Unit)? = null
+
     /** Called when the chart engine reports an error. */
     var onError: ((BridgeEvent.Error) -> Unit)? = null
 
@@ -385,6 +388,7 @@ class ActtraderChartsView @JvmOverloads constructor(
             is BridgeEvent.CompareError        -> onCompareError?.invoke(event)
             is BridgeEvent.IndicatorAdded      -> onIndicatorAdded?.invoke(event)
             is BridgeEvent.IndicatorRemoved    -> onIndicatorRemoved?.invoke(event)
+            is BridgeEvent.IndicatorLimitReached -> onIndicatorLimitReached?.invoke(event)
             is BridgeEvent.Error               -> onError?.invoke(event)
             // No typed callback yet — these reach the host through [onBridgeEvent] above.
             is BridgeEvent.AutoScaleChange,
@@ -1081,6 +1085,12 @@ class ActtraderChartsView @JvmOverloads constructor(
 
     /** Removes every active compare symbol. */
     fun clearCompares() = sendCommand(BridgeCommand.ClearCompares)
+
+    /**
+     * Opens the chart's own compare picker — the symbols passed as `isins`.
+     * Needed for Correlation, Ratio, Spread and Advance/Decline.
+     */
+    fun openComparePicker() = sendCommand(BridgeCommand.OpenComparePicker)
 
     /**
      * Resolves a pending [BridgeEvent.CompareDataRequest] with fetched bars.

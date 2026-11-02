@@ -1248,6 +1248,14 @@ sealed class BridgeCommand {
         }.toString()
     }
 
+    /** Opens the chart's own compare picker (symbols from `isins`). */
+    object OpenComparePicker : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "openComparePicker")
+            put("payload", JSONObject())
+        }.toString()
+    }
+
     /**
      * Resolves a pending [BridgeEvent.CompareDataRequest] with fetched bars.
      * @param requestId The ID from the request event.

@@ -370,6 +370,18 @@ sealed class BridgeEvent {
         val params: Map<String, Any>,
     ) : BridgeEvent()
 
+    /**
+     * A study was refused because every sub-pane slot is in use (`maxSubPanes`,
+     * default 3). The chart also shows a short notice to the user.
+     *
+     * @param shortName   Study that was refused (e.g. `"MACD"`).
+     * @param maxSubPanes The configured sub-pane limit.
+     */
+    data class IndicatorLimitReached(
+        val shortName: String,
+        val maxSubPanes: Int,
+    ) : BridgeEvent()
+
     /** A study instance was removed (pill ×, settings dialog, or removeIndicator). */
     data class IndicatorRemoved(
         val instanceId: String,
@@ -817,6 +829,11 @@ object BridgeEventParser {
                     params     = paramsObj.keys().asSequence().associateWith { paramsObj.get(it) },
                 )
             }
+
+            "indicatorLimitReached" -> BridgeEvent.IndicatorLimitReached(
+                shortName   = p.getString("shortName"),
+                maxSubPanes = p.optInt("maxSubPanes", 3),
+            )
 
             "indicatorRemoved" -> BridgeEvent.IndicatorRemoved(
                 instanceId = p.getString("instanceId"),
