@@ -1,0 +1,115 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.acttrader",
+    "module": "acttrader-charts-android",
+    "version": "1.4.0-beta.8",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.6"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "1.9.23"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "acttrader-charts-android-1.4.0-beta.8.aar",
+          "url": "acttrader-charts-android-1.4.0-beta.8.aar",
+          "size": 701505,
+          "sha512": "fffedb6fa064b9327d19ce508ca91ab46352702fba796954750a84e3aa68987bb917106744fa911b458212dbed00a3860a4ca4093cf2a2fd6d4bab44ba0cc273",
+          "sha256": "5dac8bf546ea73fe9ff0bbaf08c78c80cab1e69786a197052a918d0733e7cfb0",
+          "sha1": "3908ba56a0395c89c1790ace0d3ab77674d80d0b",
+          "md5": "012b76db988aaa94390cc521f9bd7d51"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "androidx.compose",
+          "module": "compose-bom",
+          "version": {
+            "requires": "2024.06.00"
+          },
+          "attributes": {
+            "org.gradle.category": "platform"
+          },
+          "endorseStrictVersions": true
+        },
+        {
+          "group": "androidx.compose.ui",
+          "module": "ui"
+        },
+        {
+          "group": "androidx.compose.runtime",
+          "module": "runtime"
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "1.9.23"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "acttrader-charts-android-1.4.0-beta.8.aar",
+          "url": "acttrader-charts-android-1.4.0-beta.8.aar",
+          "size": 701505,
+          "sha512": "fffedb6fa064b9327d19ce508ca91ab46352702fba796954750a84e3aa68987bb917106744fa911b458212dbed00a3860a4ca4093cf2a2fd6d4bab44ba0cc273",
+          "sha256": "5dac8bf546ea73fe9ff0bbaf08c78c80cab1e69786a197052a918d0733e7cfb0",
+          "sha1": "3908ba56a0395c89c1790ace0d3ab77674d80d0b",
+          "md5": "012b76db988aaa94390cc521f9bd7d51"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseSourcePublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "acttrader-charts-android-1.4.0-beta.8-sources.jar",
+          "url": "acttrader-charts-android-1.4.0-beta.8-sources.jar",
+          "size": 51773,
+          "sha512": "a7bf6d930f097111a58f28b7e63053a00ab8744a3a501c9a7a6402b88dc1ff2ce424edce1014d7cf22da93c6ade40db57144ba931935dc1dc9b946d111898c87",
+          "sha256": "86ddab69d88b607e64cfb9e12e1e16994c30421f41b477b36d4da9515507ae2d",
+          "sha1": "bf55d57d6634e567652c6e66a3afa28b2da1c1fc",
+          "md5": "51ad775d11bf0f42e018ca171e4b4ebe"
+        }
+      ]
+    }
+  ]
+}
