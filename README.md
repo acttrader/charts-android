@@ -475,6 +475,7 @@ chart.init(
 | `onIndicatorAdded` | `BridgeEvent.IndicatorAdded` | Study instance added — `.instanceId`, `.shortName`, `.params`; keep `instanceId` to remove that instance later |
 | `onIndicatorRemoved` | `BridgeEvent.IndicatorRemoved` | Study instance removed — `.instanceId`, `.shortName` |
 | `onIndicatorLimitReached` | `BridgeEvent.IndicatorLimitReached` | Study refused, all sub-pane slots in use — `.shortName`, `.maxSubPanes` |
+| `onVolumeAvailability` | `BridgeEvent.VolumeAvailability` | After each data load — `.hasVolume`. When `false`, volume studies are not plotted: grey out catalog indicators with `requiresVolume: true` |
 | `onError` | `BridgeEvent.Error` | Engine error — `.message`, `.code` |
 | `onBridgeEvent` | `BridgeEvent` | Generic — fires for every event including those with typed callbacks |
 
