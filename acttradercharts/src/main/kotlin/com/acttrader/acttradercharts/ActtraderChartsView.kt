@@ -315,6 +315,12 @@ class ActtraderChartsView @JvmOverloads constructor(
     /** Called when a study is refused because all `maxSubPanes` sub-pane slots are in use. */
     var onIndicatorLimitReached: ((BridgeEvent.IndicatorLimitReached) -> Unit)? = null
 
+    /**
+     * Called after each data load. When `hasVolume` is false, volume studies are not
+     * plotted; grey out the catalog indicators with `requiresVolume: true`.
+     */
+    var onVolumeAvailability: ((BridgeEvent.VolumeAvailability) -> Unit)? = null
+
     /** Called when the chart engine reports an error. */
     var onError: ((BridgeEvent.Error) -> Unit)? = null
 
@@ -389,6 +395,7 @@ class ActtraderChartsView @JvmOverloads constructor(
             is BridgeEvent.IndicatorAdded      -> onIndicatorAdded?.invoke(event)
             is BridgeEvent.IndicatorRemoved    -> onIndicatorRemoved?.invoke(event)
             is BridgeEvent.IndicatorLimitReached -> onIndicatorLimitReached?.invoke(event)
+            is BridgeEvent.VolumeAvailability -> onVolumeAvailability?.invoke(event)
             is BridgeEvent.Error               -> onError?.invoke(event)
             // No typed callback yet — these reach the host through [onBridgeEvent] above.
             is BridgeEvent.AutoScaleChange,

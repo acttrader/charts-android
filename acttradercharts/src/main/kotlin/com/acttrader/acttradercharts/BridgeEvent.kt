@@ -382,6 +382,12 @@ sealed class BridgeEvent {
         val maxSubPanes: Int,
     ) : BridgeEvent()
 
+    /**
+     * Sent after each data load. `hasVolume == false`: no loaded bar has volume, so
+     * volume studies (catalog `requiresVolume: true`) are not plotted — grey them out.
+     */
+    data class VolumeAvailability(val hasVolume: Boolean) : BridgeEvent()
+
     /** A study instance was removed (pill ×, settings dialog, or removeIndicator). */
     data class IndicatorRemoved(
         val instanceId: String,
@@ -834,6 +840,8 @@ object BridgeEventParser {
                 shortName   = p.getString("shortName"),
                 maxSubPanes = p.optInt("maxSubPanes", 3),
             )
+
+            "volumeAvailability" -> BridgeEvent.VolumeAvailability(p.optBoolean("hasVolume", true))
 
             "indicatorRemoved" -> BridgeEvent.IndicatorRemoved(
                 instanceId = p.getString("instanceId"),
