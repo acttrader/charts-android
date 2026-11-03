@@ -472,7 +472,7 @@ chart.init(
 | `onCompareAdded` | `BridgeEvent.CompareAdded` | Compare symbol added — `.symbol`, `.color` |
 | `onCompareRemoved` | `BridgeEvent.CompareRemoved` | Compare symbol removed — `.symbol` |
 | `onCompareError` | `BridgeEvent.CompareError` | Compare fetch / add failed — `.symbol`, `.message` |
-| `onIndicatorAdded` | `BridgeEvent.IndicatorAdded` | Study instance added — `.instanceId`, `.shortName`, `.params`; keep `instanceId` to remove that instance later |
+| `onIndicatorAdded` | `BridgeEvent.IndicatorAdded` | Study instance added — `.instanceId`, `.shortName`, `.params`; keep `instanceId` to remove that instance later. `shortName` is always the catalog short name (`HammingMA`, not "Hamming MA"), so it matches the `indicators` list in the catalog for ticking your menu |
 | `onIndicatorRemoved` | `BridgeEvent.IndicatorRemoved` | Study instance removed — `.instanceId`, `.shortName` |
 | `onIndicatorLimitReached` | `BridgeEvent.IndicatorLimitReached` | Study refused, all sub-pane slots in use — `.shortName`, `.maxSubPanes` |
 | `onVolumeAvailability` | `BridgeEvent.VolumeAvailability` | After each data load — `.hasVolume`. When `false`, volume studies are not plotted: hide or grey out catalog indicators with `requiresVolume: true` (the web menus leave them out) |
