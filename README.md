@@ -271,7 +271,7 @@ chart.loadData(bars)
 | `prefetchThreshold` | `Int?` | `null` | Bars from start of data at which historical fetch triggers (min 20, default 80) |
 | `mobileBarDivisor` | `Int?` | `null` | Divide desktop bar count on touch devices (`2`, `3`, or `4`) |
 | `minInitialBars` | `Int?` | `null` | If `onDataRequest` returns fewer bars, the fetch window auto-widens and retries. Default: `10` |
-| `maxLookbackMs` | `Long?` | `null` | Hard ceiling (ms) for auto-widening retries. Default: 365 days |
+| `maxLookbackMs` | `Long?` | `null` | Hard ceiling (ms) for auto-widening retries. Default: 365 days. The first request (no duration selected) always covers `maxCandles` bars even when that is longer, e.g. 200 × 1W ≈ 4 years, so long-period studies (TEMA, TRIX, KVO, CRSI) draw on weekly charts |
 | `momentumScrollEnabled` | `Boolean?` | `null` | Enable momentum (kinetic) scrolling — chart coasts after a fast flick. Default: `true` |
 | `momentumDecay` | `Double?` | `null` | Per-frame velocity decay, normalised to 60 fps. Clamped `[0.80, 0.99]`. Default: `0.95` |
 | `momentumThreshold` | `Double?` | `null` | Min release velocity (px/ms) to launch momentum. Default: `0.3` |
