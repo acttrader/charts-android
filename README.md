@@ -270,7 +270,7 @@ chart.loadData(bars)
 | `maxSubPanes` | `Int?` | `null` | Max simultaneous oscillator sub-panes |
 | `prefetchThreshold` | `Int?` | `null` | Bars from start of data at which historical fetch triggers (min 20, default 80) |
 | `mobileBarDivisor` | `Int?` | `null` | Divide desktop bar count on touch devices (`2`, `3`, or `4`) |
-| `minInitialBars` | `Int?` | `null` | If `onDataRequest` returns fewer bars, the fetch window auto-widens and retries. Default: `10` |
+| `minInitialBars` | `Int?` | `null` | If `onDataRequest` returns fewer bars, the fetch window auto-widens and retries. The retry with the most bars is kept, so a wide window the feed refuses (empty or error) never turns bars already received into \"No data available\". Default: `10` |
 | `maxLookbackMs` | `Long?` | `null` | Hard ceiling (ms) for auto-widening retries. Default: 365 days |
 | `momentumScrollEnabled` | `Boolean?` | `null` | Enable momentum (kinetic) scrolling — chart coasts after a fast flick. Default: `true` |
 | `momentumDecay` | `Double?` | `null` | Per-frame velocity decay, normalised to 60 fps. Clamped `[0.80, 0.99]`. Default: `0.95` |
@@ -475,7 +475,7 @@ chart.init(
 | `onIndicatorAdded` | `BridgeEvent.IndicatorAdded` | Study instance added — `.instanceId`, `.shortName`, `.params`; keep `instanceId` to remove that instance later |
 | `onIndicatorRemoved` | `BridgeEvent.IndicatorRemoved` | Study instance removed — `.instanceId`, `.shortName` |
 | `onIndicatorLimitReached` | `BridgeEvent.IndicatorLimitReached` | Study refused, all sub-pane slots in use — `.shortName`, `.maxSubPanes` |
-| `onVolumeAvailability` | `BridgeEvent.VolumeAvailability` | After each data load — `.hasVolume`. When `false`, volume studies are not plotted: grey out catalog indicators with `requiresVolume: true` |
+| `onVolumeAvailability` | `BridgeEvent.VolumeAvailability` | After each data load — `.hasVolume`. When `false`, volume studies are not plotted: hide or grey out catalog indicators with `requiresVolume: true` (the web menus leave them out) |
 | `onError` | `BridgeEvent.Error` | Engine error — `.message`, `.code` |
 | `onBridgeEvent` | `BridgeEvent` | Generic — fires for every event including those with typed callbacks |
 
