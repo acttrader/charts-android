@@ -1765,6 +1765,24 @@ sealed class BridgeCommand {
         }.toString()
     }
 
+    /**
+     * Chooses the glyph the next `icon` drawing places — a tap in your own
+     * Emojis / Stickers / Icons picker, built from the catalog's `glyphTabs`
+     * on the `icon` tool. Send [SetDrawingTool] with `"icon"` after it.
+     *
+     * @param glyph the character from `glyphTabs[].groups[].glyphs`.
+     * @param kind  the tab it came from: `"emoji"`, `"sticker"` (placed larger) or `"icon"` (takes the drawing colour).
+     */
+    data class SetIconGlyph(val glyph: String, val kind: String = "emoji") : BridgeCommand() {
+        override fun toJson(): String = JSONObject().apply {
+            put("type", "setIconGlyph")
+            put("payload", JSONObject().apply {
+                put("glyph", glyph)
+                put("kind", kind)
+            })
+        }.toString()
+    }
+
     /** Keeps the active tool armed after each drawing, for placing a series. */
     data class SetKeepDrawingMode(val enabled: Boolean) : BridgeCommand() {
         override fun toJson(): String = JSONObject().apply {

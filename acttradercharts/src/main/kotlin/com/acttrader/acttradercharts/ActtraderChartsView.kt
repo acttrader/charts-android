@@ -1202,6 +1202,16 @@ class ActtraderChartsView @JvmOverloads constructor(
     /** Snaps drawing points to the nearest OHLC of the bar under the cursor. */
     fun setMagnetMode(enabled: Boolean) = sendCommand(BridgeCommand.SetMagnetMode(enabled))
 
+    /**
+     * Chooses the glyph the next `icon` drawing places, from the catalog's
+     * `glyphTabs`. Call [setDrawingTool] with `"icon"` afterwards.
+     *
+     * @param glyph the emoji, sticker or icon character.
+     * @param kind  `"emoji"` (default), `"sticker"` or `"icon"`.
+     */
+    fun setIconGlyph(glyph: String, kind: String = "emoji") =
+        sendCommand(BridgeCommand.SetIconGlyph(glyph, kind))
+
     /** Keeps the active tool armed after each drawing, for placing a series. */
     fun setKeepDrawingMode(enabled: Boolean) = sendCommand(BridgeCommand.SetKeepDrawingMode(enabled))
 
